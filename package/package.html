@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Our Packages - BM’s Catering Services</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="packages.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav-wrap">
+      <a class="brand" href="index.html">
+        <span class="brand__logo">BM’s</span>
+        <span class="brand__name">Catering Services</span>
+      </a>
+
+      <nav class="nav__links">
+        <a href="../index.html">Home</a>
+        <a href="../index.html">About</a>
+        <a href="package.html" class="active">Packages</a>
+        <a href="../index.html#services">Services</a>
+        <a href="../index.html#menu">Menu</a>
+        <a href="../index.html#gallery">Gallery</a>
+      </nav>
+
+      <div class="nav__actions">
+        <a href="../index.html#contact" class="contact-btn">Contact Us</a>
+        <a href="../UserLogin/login.html" class="login-btn">Client Login</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="section section--tint">
+    <div class="container">
+      <div class="section-heading">
+        <h1 class="section__title">Our Packages</h1>
+        <p class="section__subtitle">
+          All packages require a minimum of 40 persons. No maximum limit — we can cater
+          to events of any size.
+        </p>
+      </div>
+
+      <div id="loadingState" class="status-card">Loading packages...</div>
+
+      <div id="errorState" class="status-card status-card--error hidden">
+        Unable to load packages right now.
+      </div>
+
+      <div id="emptyState" class="status-card hidden">
+        No packages found.
+      </div>
+
+      <div id="packageGrid" class="package-grid hidden"></div>
+    </div>
+  </main>
+
+  <script src="package.js"></script>
+</body>
+</html>
