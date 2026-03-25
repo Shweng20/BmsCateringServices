@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Client Login | BM'S Catering Services</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="Css/login.css" />
+  <link rel="icon" href="data:,">
+  <style>
+    .password-wrap{
+      position: relative;
+    }
+
+    .password-wrap input{
+      padding-right: 90px;
+    }
+
+    .toggle-password{
+      position: absolute;
+      top: 50%;
+      right: 12px;
+      transform: translateY(-50%);
+      border: none;
+      background: transparent;
+      color: #0f3d3e;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .toggle-password:hover{
+      opacity: .8;
+    }
+
+    .login-extra{
+      margin-top: 10px;
+      text-align: right;
+    }
+
+    .forgot-link-btn{
+      border: none;
+      background: transparent;
+      color: #1aa39a;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 0;
+      font-size: 14px;
+    }
+
+    .forgot-link-btn:hover{
+      text-decoration: underline;
+    }
+
+    .modal{
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 9999;
+    }
+
+    .modal.show{
+      display: flex;
+    }
+
+    .modal-card{
+      width: 100%;
+      max-width: 520px;
+      background: #fff;
+      border-radius: 22px;
+      padding: 24px;
+      box-shadow: 0 24px 60px rgba(0,0,0,.22);
+      position: relative;
+    }
+
+    .modal-close{
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      border: none;
+      background: transparent;
+      font-size: 24px;
+      line-height: 1;
+      cursor: pointer;
+      color: #6b7280;
+    }
+
+    .modal-close:hover{
+      color: #111827;
+    }
+
+    .modal-title{
+      margin: 0 0 8px;
+      font-family: "Playfair Display", serif;
+      font-size: 30px;
+      color: #111827;
+    }
+
+    .modal-subtitle{
+      margin: 0 0 18px;
+      color: #6b7280;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .modal-divider{
+      margin: 18px 0;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .helper-text{
+      margin: 6px 0 0;
+      font-size: 12px;
+      color: #6b7280;
+    }
+  </style>
+</head>
+<body>
+  <section class="login-page">
+    <div class="login-overlay"></div>
+
+    <div class="login-card">
+      <a href="index.html" class="back-link">← Back to Home</a>
+
+      <div class="login-header">
+        <h1>Welcome Back</h1>
+        <p>Login to your BM’s Catering Services account to continue your booking and reservations.</p>
+      </div>
+
+      <form class="login-form" id="clientLoginForm">
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" placeholder="Enter your email" required>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+          <div class="password-wrap">
+            <input type="password" id="password" name="password" placeholder="Enter your password" required>
+            <button type="button" class="toggle-password" data-target="password">Show</button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block">Login</button>
+        <p id="loginMessage" class="login-message"></p>
+
+        <div class="login-extra">
+          <button type="button" class="forgot-link-btn" id="openForgotModalBtn">Forgot Password?</button>
+        </div>
+      </form>
+
+      <div class="login-links">
+        <p>Don’t have an account? <a href="signup.html">Sign Up</a></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Forgot Password Modal -->
+  <div class="modal" id="forgotPasswordModal">
+    <div class="modal-card">
+      <button type="button" class="modal-close" id="closeForgotModalBtn">&times;</button>
+
+      <h2 class="modal-title">Forgot Password</h2>
+      <p class="modal-subtitle">
+        We’ll send a verification code to your email. Enter the code below before changing your password.
+      </p>
+
+      <form class="login-form" id="forgotPasswordForm">
+        <div class="form-group">
+          <label for="forgot_email">Email</label>
+          <input type="email" id="forgot_email" placeholder="Enter your registered email" required>
+          <p class="helper-text">A reset code will be sent to this email.</p>
+        </div>
+
+        <button type="submit" class="btn btn-outline btn-block">Send Verification Code</button>
+        <p id="forgotMessage" class="login-message"></p>
+      </form>
+
+      <div class="modal-divider"></div>
+
+      <form class="login-form" id="resetPasswordForm">
+        <div class="form-group">
+          <label for="reset_email">Email</label>
+          <input type="email" id="reset_email" placeholder="Enter your email again" required>
+        </div>
+
+        <div class="form-group">
+          <label for="reset_code">Verification Code</label>
+          <input type="text" id="reset_code" placeholder="Enter the code sent to your email" required>
+        </div>
+
+        <div class="form-group">
+          <label for="new_password">New Password</label>
+          <div class="password-wrap">
+            <input type="password" id="new_password" placeholder="Enter new password" required>
+            <button type="button" class="toggle-password" data-target="new_password">Show</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="confirm_new_password">Confirm New Password</label>
+          <div class="password-wrap">
+            <input type="password" id="confirm_new_password" placeholder="Confirm new password" required>
+            <button type="button" class="toggle-password" data-target="confirm_new_password">Show</button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block">Verify Code & Reset Password</button>
+        <p id="resetMessage" class="login-message"></p>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE_URL = "https://localhost:7241/api";
+
+    async function parseJsonSafe(response) {
+      const rawText = await response.text();
+      console.log("Raw response:", rawText);
+
+      if (!rawText) {
+        return { message: "Empty server response." };
+      }
+
+      try {
+        return JSON.parse(rawText);
+      } catch {
+        return {
+          message: "Unexpected server response.",
+          raw: rawText
+        };
+      }
+    }
+
+    document.querySelectorAll(".toggle-password").forEach(button => {
+      button.addEventListener("click", function () {
+        const targetId = this.getAttribute("data-target");
+        const input = document.getElementById(targetId);
+
+        if (input.type === "password") {
+          input.type = "text";
+          this.textContent = "Hide";
+        } else {
+          input.type = "password";
+          this.textContent = "Show";
+        }
+      });
+    });
+
+    const forgotModal = document.getElementById("forgotPasswordModal");
+    const openForgotModalBtn = document.getElementById("openForgotModalBtn");
+    const closeForgotModalBtn = document.getElementById("closeForgotModalBtn");
+
+    openForgotModalBtn.addEventListener("click", function () {
+      forgotModal.classList.add("show");
+    });
+
+    closeForgotModalBtn.addEventListener("click", function () {
+      forgotModal.classList.remove("show");
+    });
+
+    forgotModal.addEventListener("click", function (e) {
+      if (e.target === forgotModal) {
+        forgotModal.classList.remove("show");
+      }
+    });
+
+    document.getElementById("clientLoginForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const messageEl = document.getElementById("loginMessage");
+
+      messageEl.textContent = "Logging in...";
+      messageEl.className = "login-message";
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/Client/login`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            email: email,
+            password: password
+          })
+        });
+
+        const result = await parseJsonSafe(response);
+
+        if (response.ok) {
+          messageEl.textContent = result.message || "Login successful.";
+          messageEl.className = "login-message success";
+
+          localStorage.setItem("clientUser", JSON.stringify(result));
+
+          setTimeout(() => {
+            window.location.href = "index.html";
+          }, 1000);
+        } else {
+          messageEl.textContent = result.message || "Login failed.";
+          messageEl.className = "login-message error";
+        }
+      } catch (error) {
+        console.error("Login fetch error:", error);
+        messageEl.textContent = `Cannot connect to login API: ${error.message}`;
+        messageEl.className = "login-message error";
+      }
+    });
+
+    document.getElementById("forgotPasswordForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const email = document.getElementById("forgot_email").value.trim();
+      const messageEl = document.getElementById("forgotMessage");
+
+      messageEl.textContent = "Sending verification code...";
+      messageEl.className = "login-message";
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/Client/forgot-password`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            email: email
+          })
+        });
+
+        const result = await parseJsonSafe(response);
+
+        if (response.ok) {
+          document.getElementById("reset_email").value = email;
+          messageEl.textContent = result.message || "Verification code sent.";
+          messageEl.className = "login-message success";
+        } else {
+          messageEl.textContent = result.message || "Failed to send verification code.";
+          messageEl.className = "login-message error";
+        }
+      } catch (error) {
+        console.error("Forgot password error:", error);
+        messageEl.textContent = `Cannot connect to forgot password API: ${error.message}`;
+        messageEl.className = "login-message error";
+      }
+    });
+
+    document.getElementById("resetPasswordForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const email = document.getElementById("reset_email").value.trim();
+      const code = document.getElementById("reset_code").value.trim();
+      const newPassword = document.getElementById("new_password").value.trim();
+      const confirmPassword = document.getElementById("confirm_new_password").value.trim();
+      const messageEl = document.getElementById("resetMessage");
+
+      if (newPassword !== confirmPassword) {
+        messageEl.textContent = "New password and confirm password do not match.";
+        messageEl.className = "login-message error";
+        return;
+      }
+
+      messageEl.textContent = "Resetting password...";
+      messageEl.className = "login-message";
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/Client/reset-password`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            email: email,
+            code: code,
+            new_password: newPassword,
+            confirm_password: confirmPassword
+          })
+        });
+
+        const result = await parseJsonSafe(response);
+
+        if (response.ok) {
+          messageEl.textContent = result.message || "Password reset successfully.";
+          messageEl.className = "login-message success";
+
+          document.getElementById("forgot_email").value = "";
+          document.getElementById("reset_email").value = "";
+          document.getElementById("reset_code").value = "";
+          document.getElementById("new_password").value = "";
+          document.getElementById("confirm_new_password").value = "";
+
+          setTimeout(() => {
+            forgotModal.classList.remove("show");
+          }, 1200);
+        } else {
+          messageEl.textContent = result.message || "Failed to reset password.";
+          messageEl.className = "login-message error";
+        }
+      } catch (error) {
+        console.error("Reset password error:", error);
+        messageEl.textContent = `Cannot connect to reset password API: ${error.message}`;
+        messageEl.className = "login-message error";
+      }
+    });
+  </script>
+</body>
+</html>

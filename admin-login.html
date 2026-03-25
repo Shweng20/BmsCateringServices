@@ -1,0 +1,109 @@
+    <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Login | BM'S Catering Services</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="Css/login.css" />
+</head>
+<body>
+  <section class="login-page admin-theme">
+    <div class="login-overlay"></div>
+
+    <div class="login-card">
+      <a href="index.html" class="back-link">← Back to Home</a>
+
+      <div class="login-header">
+        <h1>Admin Login</h1>
+        <p>Login as admin to manage reservations, clients, packages, and system data.</p>
+      </div>
+
+      <form class="login-form" id="adminLoginForm">
+        <div class="form-group">
+          <label for="adminUsername">Username</label>
+          <input type="text" id="adminUsername" placeholder="Enter admin username" required>
+        </div>
+
+        <div class="form-group">
+          <label for="adminPassword">Password</label>
+          <input type="password" id="adminPassword" placeholder="Enter admin password" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block">Login as Admin</button>
+        <p id="adminLoginMessage" class="login-message"></p>
+      </form>
+
+      <div class="divider">
+        <span>client access</span>
+      </div>
+
+      <a href="login.html" class="btn btn-outline btn-block">Go to Client Login</a>
+    </div>
+  </section>
+
+  <script>
+    const API_BASE_URL = "https://localhost:7241/api";
+
+    async function parseJsonSafe(response) {
+      try {
+        return await response.json();
+      } catch {
+        return { message: "Unexpected server response." };
+      }
+    }
+
+    document.getElementById("adminLoginForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const username = document.getElementById("adminUsername").value.trim();
+      const password = document.getElementById("adminPassword").value.trim();
+      const messageEl = document.getElementById("adminLoginMessage");
+
+      messageEl.textContent = "Logging in...";
+      messageEl.className = "login-message";
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/Admin/login`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            username: username,
+            password: password
+          })
+        });
+
+        const result = await parseJsonSafe(response);
+
+        if (response.ok) {
+          messageEl.textContent = result.message || "Admin login successful.";
+          messageEl.className = "login-message success";
+
+          if (result.token) {
+            localStorage.setItem("adminToken", result.token);
+          }
+
+          if (result.user) {
+            localStorage.setItem("adminUser", JSON.stringify(result.user));
+          }
+
+          setTimeout(() => {
+            window.location.href = "index.html";
+          }, 1000);
+        } else {
+          messageEl.textContent = result.message || "Invalid admin credentials.";
+          messageEl.className = "login-message error";
+        }
+      } catch (error) {
+        console.error(error);
+        messageEl.textContent = "Cannot connect to Admin API.";
+        messageEl.className = "login-message error";
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BM'S Catering Services</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="Css/style.css" />
+  <link rel="icon" href="data:,">
+
+  <style>
+    /* --- Updated Profile Chip & Navbar Styles --- */
+    .nav__actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .btn-contact {
+      background-color: #0f3d3e;
+      color: #ffffff;
+      text-decoration: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      font-size: 0.95rem;
+      transition: background-color 0.2s;
+    }
+
+    .btn-contact:hover {
+      background-color: #0b2e2f;
+    }
+
+    .profile-menu {
+      position: relative;
+      display: none;
+    }
+
+    .profile-chip {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background-color: #ffffff;
+      border: 1px solid #e2e8f0;
+      padding: 6px 14px 6px 6px;
+      border-radius: 9999px;
+      cursor: pointer;
+      font: inherit;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+
+    .profile-chip:hover {
+      border-color: #cbd5e1;
+      background: #f8fafc;
+    }
+
+    .profile-avatar {
+      background-color: #1aa39a;
+      color: #ffffff;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .profile-name {
+      color: #1f2937;
+      font-weight: 600;
+      font-size: 0.95rem;
+      max-width: 90px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .profile-arrow {
+      color: #64748b;
+      margin-left: 2px;
+    }
+
+    .profile-dropdown {
+      position: absolute;
+      top: calc(100% + 10px);
+      right: 0;
+      min-width: 220px;
+      background: #ffffff;
+      border: 1px solid rgba(15, 61, 62, 0.10);
+      border-radius: 12px;
+      box-shadow: 0 18px 40px rgba(0,0,0,0.12);
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 1000;
+    }
+
+    .profile-dropdown.show {
+      display: flex;
+    }
+
+    .dropdown-header {
+      padding: 12px 16px;
+      background-color: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .dropdown-header strong {
+      font-size: 14px;
+      color: #0f3d3e;
+    }
+
+    .dropdown-header small {
+      font-size: 12px;
+      color: #6b7280;
+      word-break: break-word;
+    }
+
+    .dropdown-item {
+      width: 100%;
+      display: block;
+      text-align: left;
+      padding: 12px 16px;
+      border: none;
+      background: transparent;
+      color: #334155;
+      text-decoration: none;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .dropdown-item:hover {
+      background-color: #f1f5f9;
+    }
+
+    .text-danger {
+      color: #dc2626;
+      border-top: 1px solid #e2e8f0;
+    }
+
+    .text-danger:hover {
+      background-color: #fef2f2;
+    }
+
+    @media (max-width: 768px) {
+      .profile-name, .profile-arrow {
+        display: none;
+      }
+      .profile-chip {
+        padding: 6px;
+      }
+      .profile-dropdown {
+        right: auto;
+        left: 0;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="site-header">
+    <div class="container nav">
+      <a class="brand" href="#home">
+        <span class="brand__logo">BM’s</span>
+        <span class="brand__name">Catering Services</span>
+      </a>
+
+      <nav class="nav__links" aria-label="Primary">
+        <a href="#home" class="active">Home</a>
+        <a href="#about">About</a>
+        <a href="#packages">Packages</a>
+        <a href="#services">Services</a>
+        <a href="#menu">Menu</a>
+        <a href="#gallery">Gallery</a>
+      </nav>
+
+      <div class="nav__actions">
+        <a class="btn-contact" href="#contact">Contact Us</a>
+
+        <a class="btn btn--login" href="login.html" id="loginNavBtn">Client Login</a>
+
+        <div class="profile-menu" id="profileMenu">
+          <button type="button" class="profile-chip" id="profileToggleBtn">
+            <span class="profile-avatar" id="navAvatar">U</span>
+            <span class="profile-name" id="navUserName">My Account</span>
+            <svg class="profile-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </button>
+
+          <div class="profile-dropdown" id="profileDropdown">
+            <div class="dropdown-header">
+              <strong id="dropdownUserName">User</strong>
+              <small id="dropdownUserEmail">user@email.com</small>
+            </div>
+
+            <a href="profile.html" class="dropdown-item">My Profile</a>
+            <a href="reservation.html" class="dropdown-item">My Bookings</a>
+            <button type="button" class="dropdown-item text-danger" id="logoutBtn">Logout</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main id="home">
+    <section class="hero">
+      <div class="hero__bg" role="img" aria-label="Catering table background"></div>
+      <div class="hero__overlay"></div>
+
+      <div class="container hero__content">
+        <h1>BM’s Catering Services</h1>
+        <p>
+          Quality catering services with delicious food, elegant presentation, and reliable
+          service for all types of events.
+        </p>
+
+        <div class="hero__actions">
+          <a class="btn btn--accent" href="package.html">Book your event</a>
+          <a class="btn btn--ghost" href="#packages">View Packages</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="about" class="section">
+      <div class="container">
+        <h2 class="section__title">About BM’s Catering Services</h2>
+        <p class="section__subtitle">
+          We are passionate about creating exceptional culinary experiences that make your special
+          events truly memorable.
+        </p>
+
+        <div class="feature-cards">
+          <article class="card">
+            <div class="icon-badge">🍽️</div>
+            <h3>Delicious Food</h3>
+            <p>Crafted with premium ingredients and culinary expertise to delight every palate.</p>
+          </article>
+
+          <article class="card">
+            <div class="icon-badge">👨‍🍳</div>
+            <h3>Elegant Presentation</h3>
+            <p>Beautifully presented dishes that create lasting impressions at your events.</p>
+          </article>
+
+          <article class="card">
+            <div class="icon-badge">✅</div>
+            <h3>Reliable Service</h3>
+            <p>Professional staff dedicated to ensuring your event runs smoothly from start to finish.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section--tint">
+      <div class="container split">
+        <div class="split__img">
+          <img src="https://images.unsplash.com/photo-1555244162-803834f70033?q=80&w=1600&auto=format&fit=crop" alt="Food buffet" />
+        </div>
+
+        <div class="split__text">
+          <h2 class="split__title">About BM’s Catering Services</h2>
+          <p class="split__lead">
+            We specialize in delivering unforgettable culinary experiences, offering top-notch catering
+            services for weddings, corporate events, birthday parties, and more. Our commitment to quality
+            ingredients, elegant presentation, and exceptional service ensures your event is memorable.
+          </p>
+
+          <div class="mini-features">
+            <div class="mini">
+              <span class="mini__icon">🌿</span>
+              <div>
+                <h4>Fresh Ingredients</h4>
+                <p>High-quality ingredients for every dish we serve.</p>
+              </div>
+            </div>
+
+            <div class="mini">
+              <span class="mini__icon">👥</span>
+              <div>
+                <h4>Professional Staff</h4>
+                <p>Trained team for smooth and organized event operations.</p>
+              </div>
+            </div>
+
+            <div class="mini">
+              <span class="mini__icon">✨</span>
+              <div>
+                <h4>Elegant Presentation</h4>
+                <p>Stylish setup and plating that impresses your guests.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="packages" class="section">
+      <div class="container">
+        <h2 class="section__title">Our Packages</h2>
+        <p class="section__subtitle">
+          All packages require a minimum of 40 persons. No maximum limit — we can cater to events of any size.
+        </p>
+
+        <div class="packages">
+          <article class="pkg">
+            <div class="pkg__img">
+              <img src="https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?q=80&w=1600&auto=format&fit=crop" alt="Package 1" />
+            </div>
+            <div class="pkg__body">
+              <h3>Package 1</h3>
+              <p>Best for simple celebrations and small gatherings.</p>
+
+              <ul class="pkg__list">
+                <li>✔ 4 Menu Items</li>
+                <li>✔ Rice</li>
+                <li>✔ Drinks</li>
+                <li>✔ Basic Setup</li>
+              </ul>
+
+              <div class="pkg__rules">
+                <span>Minimum: 40 pax</span>
+                <span>No maximum limit</span>
+              </div>
+
+              <div class="pkg__meta">Starts at <strong>₱500 / pax</strong></div>
+              <a class="btn btn--primary btn--block" href="package.html">Choose Package</a>
+            </div>
+          </article>
+
+          <article class="pkg">
+            <div class="pkg__img">
+              <img src="https://images.unsplash.com/photo-1544986581-efac024faf62?q=80&w=1600&auto=format&fit=crop" alt="Package 2" />
+            </div>
+            <div class="pkg__body">
+              <h3>Package 2</h3>
+              <p>Perfect for events that need more variety and a fuller meal set.</p>
+
+              <ul class="pkg__list">
+                <li>✔ 5 Menu Items</li>
+                <li>✔ 1 Pasta</li>
+                <li>✔ Rice & Drinks</li>
+                <li>✔ Standard Setup</li>
+              </ul>
+
+              <div class="pkg__rules">
+                <span>Minimum: 40 pax</span>
+                <span>No maximum limit</span>
+              </div>
+
+              <div class="pkg__meta">Starts at <strong>₱750 / pax</strong></div>
+              <a class="btn btn--primary btn--block" href="package.html">Choose Package</a>
+            </div>
+          </article>
+
+          <article class="pkg">
+            <div class="pkg__img">
+              <img src="https://images.unsplash.com/photo-1555244162-803834f70033?q=80&w=1600&auto=format&fit=crop" alt="Package 3 Decoration and Services" />
+            </div>
+            <div class="pkg__body">
+              <h3>Package 3</h3>
+              <p>Decoration and services only for clients who want event add-ons.</p>
+
+              <ul class="pkg__list">
+                <li>✔ Event Decoration</li>
+                <li>✔ Table & Venue Styling</li>
+                <li>✔ Sound & Lights (Optional)</li>
+                <li>✔ Host / Coordinator</li>
+              </ul>
+
+              <div class="pkg__rules">
+                <span>Minimum: 40 pax</span>
+                <span>No maximum limit</span>
+              </div>
+
+              <div class="pkg__meta">Custom Pricing Available</div>
+              <a class="btn btn--primary btn--block" href="package.html">Inquire Now</a>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="services" class="section section--tint">
+      <div class="container">
+        <h2 class="section__title">Why Choose Us</h2>
+
+        <div class="why">
+          <div class="why__item">
+            <div class="why__icon">🥗</div>
+            <h4>Premium Ingredients</h4>
+            <p>Fresh and high-quality ingredients for each event.</p>
+          </div>
+
+          <div class="why__item">
+            <div class="why__icon">🎯</div>
+            <h4>Event Specialists</h4>
+            <p>We customize menus and services for your exact needs.</p>
+          </div>
+
+          <div class="why__item">
+            <div class="why__icon">⏱️</div>
+            <h4>On-Time Delivery</h4>
+            <p>We deliver and set up punctually for a stress-free event.</p>
+          </div>
+
+          <div class="why__item">
+            <div class="why__icon">🍽️</div>
+            <h4>Elegant Setup</h4>
+            <p>Stylish food presentation and well-plated service.</p>
+          </div>
+        </div>
+
+        <div class="center">
+          <a class="btn btn--primary" href="#gallery">View More Photos</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="menu" class="section">
+      <div class="container">
+        <h2 class="section__title">Sample Menu</h2>
+        <p class="section__subtitle">
+          Explore our food categories prepared to satisfy your guests and elevate your event.
+        </p>
+
+        <div class="feature-cards">
+          <article class="card">
+            <div class="icon-badge">🍗</div>
+            <h3>Main Dishes</h3>
+            <p>Delicious meat, seafood, and specialty dishes made with care and flavor.</p>
+          </article>
+
+          <article class="card">
+            <div class="icon-badge">🍝</div>
+            <h3>Pasta Selection</h3>
+            <p>Classic and creamy pasta dishes perfect for celebrations and gatherings.</p>
+          </article>
+
+          <article class="card">
+            <div class="icon-badge">🍰</div>
+            <h3>Desserts & Drinks</h3>
+            <p>Sweet desserts and refreshing beverages to complete the dining experience.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="gallery" class="section section--tint">
+      <div class="container">
+        <h2 class="section__title">Gallery</h2>
+        <div class="gallery">
+          <img src="https://images.unsplash.com/photo-1547573854-74d6c546f2a0?q=80&w=1200&auto=format&fit=crop" alt="Gallery 1">
+          <img src="https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?q=80&w=1200&auto=format&fit=crop" alt="Gallery 2">
+          <img src="https://images.unsplash.com/photo-1555244162-803834f70033?q=80&w=1200&auto=format&fit=crop" alt="Gallery 3">
+          <img src="https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?q=80&w=1200&auto=format&fit=crop" alt="Gallery 4">
+          <img src="https://images.unsplash.com/photo-1551024601-bec78aea704b?q=80&w=1200&auto=format&fit=crop" alt="Gallery 5">
+          <img src="https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?q=80&w=1200&auto=format&fit=crop" alt="Gallery 6">
+          <img src="https://images.unsplash.com/photo-1541544181074-e0d0d7b1b523?q=80&w=1200&auto=format&fit=crop" alt="Gallery 7">
+          <img src="https://images.unsplash.com/photo-1555244162-803834f70033?q=80&w=1200&auto=format&fit=crop" alt="Gallery 8">
+        </div>
+      </div>
+    </section>
+
+    <footer id="contact" class="footer">
+      <div class="container footer__inner">
+        <div>
+          <h3>BM’S Catering Services</h3>
+          <p>Quality catering, elegant presentation, reliable service.</p>
+        </div>
+
+        <div class="footer__links">
+          <a href="#home">Home</a>
+          <a href="#about">About</a>
+          <a href="#packages">Packages</a>
+          <a href="#services">Services</a>
+          <a href="#menu">Menu</a>
+          <a href="#gallery">Gallery</a>
+        </div>
+
+        <div class="footer__cta">
+          <a class="btn btn--accent" href="login.html">Client Login</a>
+        </div>
+      </div>
+    </footer>
+  </main>
+
+  <script>
+    function getStoredClient() {
+      const raw = localStorage.getItem("clientUser");
+      if (!raw) return null;
+
+      try {
+        return JSON.parse(raw);
+      } catch {
+        return null;
+      }
+    }
+
+    function setNavbarProfile() {
+      const client = getStoredClient();
+
+      const loginNavBtn = document.getElementById("loginNavBtn");
+      const profileMenu = document.getElementById("profileMenu");
+      const navAvatar = document.getElementById("navAvatar");
+      const navUserName = document.getElementById("navUserName");
+      const dropdownUserName = document.getElementById("dropdownUserName");
+      const dropdownUserEmail = document.getElementById("dropdownUserEmail");
+
+      if (client && client.full_name) {
+        loginNavBtn.style.display = "none";
+        profileMenu.style.display = "block";
+
+        const fullName = client.full_name || "User";
+        const email = client.email || "";
+        const firstLetter = fullName.trim().charAt(0).toUpperCase();
+
+        navAvatar.textContent = firstLetter;
+        navUserName.textContent = fullName.split(" ")[0];
+        dropdownUserName.textContent = fullName;
+        dropdownUserEmail.textContent = email;
+      } else {
+        loginNavBtn.style.display = "inline-flex";
+        profileMenu.style.display = "none";
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+      setNavbarProfile();
+
+      const toggleBtn = document.getElementById("profileToggleBtn");
+      const dropdown = document.getElementById("profileDropdown");
+      const logoutBtn = document.getElementById("logoutBtn");
+
+      if (toggleBtn) {
+        toggleBtn.addEventListener("click", function (e) {
+          e.stopPropagation();
+          dropdown.classList.toggle("show");
+        });
+      }
+
+      document.addEventListener("click", function () {
+        if (dropdown) {
+          dropdown.classList.remove("show");
+        }
+      });
+
+      if (dropdown) {
+        dropdown.addEventListener("click", function (e) {
+          e.stopPropagation();
+        });
+      }
+
+      if (logoutBtn) {
+        logoutBtn.addEventListener("click", function () {
+          localStorage.removeItem("clientUser");
+          localStorage.removeItem("clientToken");
+          window.location.href = "login.html";
+        });
+      }
+    });
+  </script>
+</body>
+</html>

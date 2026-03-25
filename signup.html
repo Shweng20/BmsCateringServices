@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign Up | BM'S Catering Services</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="Css/login.css" />
+  <link rel="icon" href="data:,">
+  <style>
+    .password-wrap{
+      position: relative;
+    }
+
+    .password-wrap input{
+      padding-right: 90px;
+    }
+
+    .toggle-password{
+      position: absolute;
+      top: 50%;
+      right: 12px;
+      transform: translateY(-50%);
+      border: none;
+      background: transparent;
+      color: #0f3d3e;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .toggle-password:hover{
+      opacity: .8;
+    }
+
+    .verify-card{
+      margin-top: 8px;
+      padding: 18px;
+      border-radius: 16px;
+      background: rgba(15, 61, 62, 0.05);
+      border: 1px solid rgba(15, 61, 62, 0.12);
+    }
+
+    .verify-title{
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 6px;
+      font-size: 16px;
+      font-weight: 700;
+      color: #0f3d3e;
+    }
+
+    .verify-text{
+      margin: 0 0 14px;
+      font-size: 13px;
+      color: #6b7280;
+      line-height: 1.5;
+    }
+
+    .helper-text{
+      margin: 6px 0 0;
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    .btn-soft{
+      background: #eef7f6;
+      color: #0f3d3e;
+      border: 1px solid rgba(15, 61, 62, 0.15);
+    }
+
+    .btn-soft:hover{
+      background: #e2f0ee;
+    }
+
+    .password-note{
+      margin-top: 6px;
+      font-size: 12px;
+      color: #6b7280;
+    }
+  </style>
+</head>
+<body>
+  <section class="login-page">
+    <div class="login-overlay"></div>
+
+    <div class="login-card">
+      <a href="index.html" class="back-link">← Back to Home</a>
+
+      <div class="login-header">
+        <h1>Create Account</h1>
+        <p>Sign up, receive a verification code, and activate your account before logging in.</p>
+      </div>
+
+      <form class="login-form" id="signupForm">
+        <div class="form-group">
+          <label for="full_name">Full Name</label>
+          <input type="text" id="full_name" placeholder="Enter your full name" required>
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <input type="email" id="email" placeholder="Enter your email" required>
+          <p class="helper-text">We will send your verification code to this email.</p>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+          <div class="password-wrap">
+            <input type="password" id="password" placeholder="Create password" required>
+            <button type="button" class="toggle-password" data-target="password">Show</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="confirm_password">Confirm Password</label>
+          <div class="password-wrap">
+            <input type="password" id="confirm_password" placeholder="Confirm password" required>
+            <button type="button" class="toggle-password" data-target="confirm_password">Show</button>
+          </div>
+        </div>
+
+        <p class="password-note">Use a strong password you can remember.</p>
+
+        <div class="form-group">
+          <label for="contact_number">Contact Number</label>
+          <input type="text" id="contact_number" placeholder="Enter your contact number" required>
+        </div>
+
+        <div class="form-group">
+          <label for="address">Address</label>
+          <input type="text" id="address" placeholder="Enter your address" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block">Create Account</button>
+        <p id="signupMessage" class="login-message"></p>
+      </form>
+
+      <div class="divider"><span>email verification</span></div>
+
+      <div class="verify-card">
+        <h3 class="verify-title">📩 Verify Your Email</h3>
+        <p class="verify-text">
+          Enter the verification code sent to your email. If you did not receive it,
+          you can resend a new code below.
+        </p>
+
+        <form class="login-form" id="verifyForm">
+          <div class="form-group">
+            <label for="verifyEmail">Email</label>
+            <input type="email" id="verifyEmail" placeholder="Enter your email again" required>
+          </div>
+
+          <div class="form-group">
+            <label for="code">Verification Code</label>
+            <input type="text" id="code" placeholder="Enter 6-digit code" required>
+          </div>
+
+          <button type="submit" class="btn btn-outline btn-block">Verify Email</button>
+          <button type="button" class="btn btn-soft btn-block" id="resendCodeBtn">Resend Code</button>
+          <p id="verifyMessage" class="login-message"></p>
+        </form>
+      </div>
+
+      <div class="login-links">
+        <p>Already have an account? <a href="login.html">Login</a></p>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    const API_BASE_URL = "https://localhost:7241/api";
+
+    async function parseJsonOrText(response) {
+      const rawText = await response.text();
+      console.log("Raw response:", rawText);
+
+      try {
+        return JSON.parse(rawText);
+      } catch {
+        return {
+          message: "Unexpected server response.",
+          raw: rawText
+        };
+      }
+    }
+
+    document.querySelectorAll(".toggle-password").forEach(button => {
+      button.addEventListener("click", function () {
+        const targetId = this.getAttribute("data-target");
+        const input = document.getElementById(targetId);
+
+        if (input.type === "password") {
+          input.type = "text";
+          this.textContent = "Hide";
+        } else {
+          input.type = "password";
+          this.textContent = "Show";
+        }
+      });
+    });
+
+    document.getElementById("signupForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const messageEl = document.getElementById("signupMessage");
+      const emailValue = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const confirmPassword = document.getElementById("confirm_password").value.trim();
+
+      messageEl.className = "login-message";
+
+      if (password !== confirmPassword) {
+        messageEl.textContent = "Password and confirm password do not match.";
+        messageEl.className = "login-message error";
+        return;
+      }
+
+      messageEl.textContent = "Creating account...";
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/Client/signup`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            full_name: document.getElementById("full_name").value.trim(),
+            email: emailValue,
+            password: password,
+            contact_number: document.getElementById("contact_number").value.trim(),
+            address: document.getElementById("address").value.trim()
+          })
+        });
+
+        const result = await parseJsonOrText(response);
+
+        if (response.ok) {
+          let text = result.message || "Signup successful.";
+
+          if (result.verification_code) {
+            text += ` Verification code: ${result.verification_code}`;
+            document.getElementById("code").value = result.verification_code;
+          }
+
+          messageEl.textContent = text;
+          messageEl.className = "login-message success";
+          document.getElementById("verifyEmail").value = emailValue;
+        } else {
+          if (result.raw) {
+            messageEl.textContent = "Server returned non-JSON response. Check console.";
+          } else {
+            messageEl.textContent = result.error
+              ? `${result.message} (${result.error})`
+              : (result.message || "Signup failed.");
+          }
+
+          messageEl.className = "login-message error";
+          document.getElementById("verifyEmail").value = emailValue;
+        }
+      } catch (error) {
+        console.error("Signup fetch error:", error);
+        messageEl.textContent = `Cannot connect to signup API: ${error.message}`;
+        messageEl.className = "login-message error";
+      }
+    });
+
+    document.getElementById("verifyForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const messageEl = document.getElementById("verifyMessage");
+      messageEl.textContent = "Verifying email...";
+      messageEl.className = "login-message";
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/Client/verify-email`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            email: document.getElementById("verifyEmail").value.trim(),
+            code: document.getElementById("code").value.trim()
+          })
+        });
+
+        const result = await parseJsonOrText(response);
+
+        if (response.ok) {
+          messageEl.textContent = result.message || "Email verified successfully.";
+          messageEl.className = "login-message success";
+
+          setTimeout(() => {
+            window.location.href = "login.html";
+          }, 1500);
+        } else {
+          if (result.raw) {
+            messageEl.textContent = "Server returned non-JSON response. Check console.";
+          } else {
+            messageEl.textContent = result.error
+              ? `${result.message} (${result.error})`
+              : (result.message || "Verification failed.");
+          }
+
+          messageEl.className = "login-message error";
+        }
+      } catch (error) {
+        console.error("Verify fetch error:", error);
+        messageEl.textContent = `Cannot connect to verification API: ${error.message}`;
+        messageEl.className = "login-message error";
+      }
+    });
+
+    document.getElementById("resendCodeBtn").addEventListener("click", async function () {
+      const email = document.getElementById("verifyEmail").value.trim();
+      const messageEl = document.getElementById("verifyMessage");
+
+      if (!email) {
+        messageEl.textContent = "Enter your email first.";
+        messageEl.className = "login-message error";
+        return;
+      }
+
+      messageEl.textContent = "Sending new code...";
+      messageEl.className = "login-message";
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/Client/resend-code`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            email: email
+          })
+        });
+
+        const result = await parseJsonOrText(response);
+
+        if (response.ok) {
+          messageEl.textContent = result.message || "A new verification code was sent.";
+
+          if (result.verification_code) {
+            document.getElementById("code").value = result.verification_code;
+            messageEl.textContent += ` New code: ${result.verification_code}`;
+          }
+
+          messageEl.className = "login-message success";
+        } else {
+          if (result.raw) {
+            messageEl.textContent = "Server returned non-JSON response. Check console.";
+          } else {
+            messageEl.textContent = result.error
+              ? `${result.message} (${result.error})`
+              : (result.message || "Failed to resend code.");
+          }
+
+          messageEl.className = "login-message error";
+        }
+      } catch (error) {
+        console.error("Resend fetch error:", error);
+        messageEl.textContent = `Cannot connect to resend API: ${error.message}`;
+        messageEl.className = "login-message error";
+      }
+    });
+  </script>
+</body>
+</html>

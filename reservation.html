@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Book an Event - BM’s Catering Services</title>
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="Css/reservation.css" />
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+
+  <style>
+    /* ===== NAVBAR ===== */
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: #f2f2f2;
+      border-bottom: 1px solid rgba(15, 61, 62, 0.08);
+    }
+
+    .site-header .nav-wrap {
+      max-width: 1320px;
+      margin: 0 auto;
+      min-height: 90px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 28px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .brand__logo,
+    .brand__name {
+      font-family: "Inter", sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: #374151;
+    }
+
+    .nav__links {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 42px;
+    }
+
+    .nav__links a {
+      text-decoration: none;
+      font-family: "Inter", sans-serif;
+      font-size: 17px;
+      font-weight: 600;
+      color: #374151;
+      transition: color 0.2s ease, transform 0.2s ease;
+    }
+
+    .nav__links a:hover,
+    .nav__links a.active {
+      color: #0f4b4d;
+    }
+
+    .nav__links a:hover {
+      transform: translateY(-1px);
+    }
+
+    .nav__actions {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .contact-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px 26px;
+      border-radius: 12px;
+      background: #0f4b4d;
+      color: #ffffff;
+      text-decoration: none;
+      font-family: "Inter", sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+
+    .contact-btn:hover {
+      background: #0c3d3f;
+      transform: translateY(-1px);
+    }
+
+    .profile-menu {
+      position: relative;
+    }
+
+    .profile-chip {
+      min-height: 56px;
+      padding: 8px 18px 8px 8px;
+      border: 1px solid #d9dee3;
+      border-radius: 999px;
+      background: #f7f7f7;
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      transition: box-shadow 0.2s ease, background 0.2s ease;
+    }
+
+    .profile-chip:hover {
+      background: #ffffff;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+    }
+
+    .profile-avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: #1aa39a;
+      color: #ffffff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 700;
+      font-family: "Inter", sans-serif;
+    }
+
+    .profile-name {
+      font-size: 16px;
+      font-weight: 700;
+      color: #1f2937;
+      font-family: "Inter", sans-serif;
+    }
+
+    .profile-arrow {
+      width: 18px;
+      height: 18px;
+      color: #64748b;
+      flex-shrink: 0;
+    }
+
+    .profile-dropdown {
+      position: absolute;
+      top: calc(100% + 10px);
+      right: 0;
+      width: 220px;
+      background: #ffffff;
+      border: 1px solid rgba(15, 61, 62, 0.08);
+      border-radius: 16px;
+      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.14);
+      padding: 10px;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(8px);
+      transition: all 0.2s ease;
+    }
+
+    .profile-dropdown.show {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    .dropdown-header {
+      padding: 10px 12px;
+      font-size: 14px;
+      color: #374151;
+    }
+
+    .dropdown-item {
+      width: 100%;
+      display: block;
+      padding: 11px 12px;
+      border: 0;
+      background: transparent;
+      text-align: left;
+      text-decoration: none;
+      color: #1f2937;
+      font-size: 14px;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    .dropdown-item:hover {
+      background: #f3f4f6;
+    }
+
+    .dropdown-divider {
+      height: 1px;
+      background: #e5e7eb;
+      margin: 8px 0;
+    }
+
+    .text-danger {
+      color: #dc2626;
+    }
+
+    /* ===== CALENDAR ===== */
+    #calendar .fc-daygrid-day {
+      cursor: pointer;
+      transition: background-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    #calendar .fc-daygrid-day:hover {
+      background-color: rgba(26, 163, 154, 0.12);
+      box-shadow: inset 0 0 0 1px rgba(26, 163, 154, 0.28);
+    }
+
+    #calendar .fc-day-selected {
+      background-color: rgba(26, 163, 154, 0.18) !important;
+      box-shadow: inset 0 0 0 2px #1aa39a !important;
+      border-radius: 8px;
+    }
+
+    #calendar .fc-event {
+      cursor: pointer;
+      transition: transform 0.2s ease, opacity 0.2s ease;
+    }
+
+    #calendar .fc-event:hover {
+      transform: scale(1.02);
+      opacity: 0.92;
+    }
+
+    /* ===== TOAST ===== */
+    .toast-container {
+      position: fixed;
+      top: 104px;
+      right: 20px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      pointer-events: none;
+    }
+
+    .toast {
+      min-width: 260px;
+      max-width: 380px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 500;
+      box-shadow: 0 14px 35px rgba(0, 0, 0, 0.18);
+      opacity: 0;
+      transform: translateY(-10px);
+      animation: toastIn 0.25s ease forwards;
+    }
+
+    .toast--success { background: #16a34a; }
+    .toast--error { background: #dc2626; }
+    .toast--info { background: #2563eb; }
+    .toast--warning { background: #d97706; }
+
+    .toast.hide {
+      animation: toastOut 0.25s ease forwards;
+    }
+
+    @keyframes toastIn {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes toastOut {
+      to {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+    }
+
+    @media (max-width: 1200px) {
+      .site-header .nav-wrap {
+        grid-template-columns: 1fr;
+        justify-items: center;
+        padding-top: 18px;
+        padding-bottom: 18px;
+        gap: 18px;
+      }
+
+      .nav__links {
+        flex-wrap: wrap;
+        gap: 18px 28px;
+      }
+
+      .nav__actions {
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .nav__links {
+        gap: 14px 18px;
+      }
+
+      .nav__links a {
+        font-size: 15px;
+      }
+
+      .contact-btn {
+        padding: 13px 20px;
+        font-size: 15px;
+      }
+
+      .profile-name {
+        max-width: 90px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
+  </style>
+</head>
+
+<body class="section--tint">
+  <header class="site-header">
+    <div class="container nav-wrap">
+      <a class="brand" href="index.html">
+        <span class="brand__logo">BM’s</span>
+        <span class="brand__name">Catering Services</span>
+      </a>
+
+      <nav class="nav__links">
+        <a href="index.html" class="active">Home</a>
+        <a href="about.html">About</a>
+        <a href="index.html#packages">Packages</a>
+        <a href="index.html#services">Services</a>
+        <a href="index.html#menu">Menu</a>
+        <a href="index.html#gallery">Gallery</a>
+      </nav>
+
+      <div class="nav__actions">
+        <a href="index.html#contact" class="contact-btn">Contact Us</a>
+
+        <div class="profile-menu" id="profileMenu">
+          <button type="button" class="profile-chip" id="profileToggleBtn">
+            <span class="profile-avatar" id="navAvatar">U</span>
+            <span class="profile-name" id="navUserName">User</span>
+            <svg class="profile-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+
+          <div class="profile-dropdown" id="profileDropdown">
+            <div class="dropdown-header">
+              <strong id="dropdownUserName">User Name</strong>
+            </div>
+            <a href="profile.html" class="dropdown-item">My Profile</a>
+            <a href="reservation.html" class="dropdown-item">Reservations</a>
+            <div class="dropdown-divider"></div>
+            <button type="button" class="dropdown-item text-danger" id="logoutBtn">Logout</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container section">
+    <h2 class="section__title">Event Reservation</h2>
+    <p class="section__subtitle">
+      Select an available date on the calendar to start your booking request.
+    </p>
+
+    <div class="booking-grid">
+      <div class="calendar-card">
+        <div id="calendar"></div>
+      </div>
+
+      <div class="booking-form">
+        <h3 class="booking-form__title">Booking Details</h3>
+
+        <form id="resForm">
+          <div class="form-group">
+            <label for="event_date">Selected Date</label>
+            <input
+              type="text"
+              id="event_date"
+              name="event_date"
+              class="form-control"
+              readonly
+              required
+              placeholder="Pick a date from the calendar"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="event_type">Event Type</label>
+            <input
+              type="text"
+              id="event_type"
+              name="event_type"
+              class="form-control"
+              required
+              placeholder="Type your event type"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="venue">Venue Address</label>
+            <input
+              type="text"
+              id="venue"
+              name="venue"
+              class="form-control"
+              required
+              placeholder="Where is the event?"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="event_time">Event Time</label>
+            <input
+              type="time"
+              id="event_time"
+              name="event_time"
+              class="form-control"
+              required
+            />
+          </div>
+
+          <button type="submit" class="btn btn--accent btn--block">Confirm Request</button>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const API_BASE = "https://localhost:7241";
+      const RESERVATION_API = `${API_BASE}/Reservation`;
+
+      const toastContainer = document.getElementById("toastContainer");
+
+      function showToast(message, type = "info", duration = 3000) {
+        const toast = document.createElement("div");
+        toast.className = `toast toast--${type}`;
+        toast.textContent = message;
+
+        toastContainer.appendChild(toast);
+
+        setTimeout(() => {
+          toast.classList.add("hide");
+          setTimeout(() => {
+            toast.remove();
+          }, 250);
+        }, duration);
+      }
+
+      function redirectWithToast(message, type, url, delay = 1300) {
+        showToast(message, type, delay);
+        setTimeout(() => {
+          window.location.href = url;
+        }, delay);
+      }
+
+      const clientData = localStorage.getItem("clientUser");
+
+      if (!clientData) {
+        redirectWithToast("Please login first.", "warning", "login.html");
+        return;
+      }
+
+      let client;
+
+      try {
+        client = JSON.parse(clientData);
+      } catch (error) {
+        localStorage.removeItem("clientUser");
+        redirectWithToast("Invalid session. Please login again.", "error", "login.html");
+        return;
+      }
+
+      if (!client.client_id) {
+        localStorage.removeItem("clientUser");
+        redirectWithToast("Client session is missing. Please login again.", "error", "login.html");
+        return;
+      }
+
+      const fullName = client.full_name || "User";
+      document.getElementById("navAvatar").textContent = fullName.charAt(0).toUpperCase();
+      document.getElementById("navUserName").textContent = fullName.split(" ")[0];
+      document.getElementById("dropdownUserName").textContent = fullName;
+
+      const toggleBtn = document.getElementById("profileToggleBtn");
+      const dropdown = document.getElementById("profileDropdown");
+      const logoutBtn = document.getElementById("logoutBtn");
+
+      toggleBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        dropdown.classList.toggle("show");
+      });
+
+      document.addEventListener("click", function () {
+        dropdown.classList.remove("show");
+      });
+
+      dropdown.addEventListener("click", function (e) {
+        e.stopPropagation();
+      });
+
+      logoutBtn.addEventListener("click", function () {
+        localStorage.removeItem("clientUser");
+        window.location.href = "login.html";
+      });
+
+      const eventDateInput = document.getElementById("event_date");
+      const calendarEl = document.getElementById("calendar");
+      let selectedDateCell = null;
+
+      const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: "dayGridMonth",
+        headerToolbar: {
+          left: "prev,next today",
+          center: "title",
+          right: "dayGridMonth"
+        },
+
+        events: async function (fetchInfo, successCallback, failureCallback) {
+          try {
+            const url = `${RESERVATION_API}?start=${encodeURIComponent(fetchInfo.startStr)}&end=${encodeURIComponent(fetchInfo.endStr)}`;
+
+            const response = await fetch(url);
+            const rawText = await response.text();
+
+            let data = [];
+            try {
+              data = rawText ? JSON.parse(rawText) : [];
+            } catch {
+              data = [];
+            }
+
+            if (!response.ok) {
+              console.error("Calendar GET failed:", rawText);
+              throw new Error(`Failed to load reservations. HTTP ${response.status}`);
+            }
+
+            const events = (data || [])
+              .filter(item => !item.is_deleted && item.event_date)
+              .map(item => ({
+                id: item.reservation_id,
+                title: item.event_type ? `${item.event_type} Reserved` : "Reserved",
+                start: item.event_date,
+                allDay: true
+              }));
+
+            successCallback(events);
+          } catch (error) {
+            console.error("Calendar load error:", error);
+            showToast("Unable to load reservation calendar.", "error", 4000);
+            failureCallback(error);
+          }
+        },
+
+        dayCellDidMount: function (info) {
+          info.el.title = "Click to select this date";
+        },
+
+        eventDidMount: function (info) {
+          info.el.title = info.event.title;
+        },
+
+        dateClick: function (info) {
+          eventDateInput.value = info.dateStr;
+
+          if (selectedDateCell) {
+            selectedDateCell.classList.remove("fc-day-selected");
+          }
+
+          info.dayEl.classList.add("fc-day-selected");
+          selectedDateCell = info.dayEl;
+        }
+      });
+
+      calendar.render();
+
+      const form = document.getElementById("resForm");
+
+      form.addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        if (!form.event_date.value) {
+          showToast("Please select a date from the calendar.", "warning");
+          return;
+        }
+
+        const rawTime = form.event_time.value;
+        const safeTime = rawTime ? `${rawTime}:00` : "";
+
+        const payload = {
+          client_id: Number(client.client_id),
+          event_type: form.event_type.value.trim(),
+          event_date: form.event_date.value,
+          event_time: safeTime,
+          venue: form.venue.value.trim(),
+          total_amount: 0
+        };
+
+        console.log("Submitting payload:", payload);
+
+        try {
+          const response = await fetch(RESERVATION_API, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+          });
+
+          const rawText = await response.text();
+          let result = {};
+
+          try {
+            result = rawText ? JSON.parse(rawText) : {};
+          } catch {
+            result = { message: rawText };
+          }
+
+          if (response.ok) {
+            showToast(result.message || "Booking request sent successfully!", "success");
+
+            form.reset();
+            eventDateInput.value = "";
+
+            if (selectedDateCell) {
+              selectedDateCell.classList.remove("fc-day-selected");
+              selectedDateCell = null;
+            }
+
+            calendar.refetchEvents();
+          } else {
+            console.error("POST error object:", result);
+            console.log("POST error JSON:", JSON.stringify(result, null, 2));
+
+            if (result.errors) {
+              showToast("Validation failed. Please check your inputs.", "error", 4000);
+            } else {
+              showToast(result.message || `Failed to submit booking. HTTP ${response.status}`, "error", 4000);
+            }
+          }
+        } catch (error) {
+          console.error("Submit error:", error);
+          showToast("Server connection error.", "error", 4000);
+        }
+      });
+    });
+  </script>
+</body>
+</html>
