@@ -4,89 +4,43 @@ const DASHBOARD_ENDPOINT = `${API_BASE}/api/AdminDashboard`;
 let reservations = [];
 let filteredReservations = [];
 let refreshTimer = null;
-let apiOnline = false;
 
+// ===== ELEMENTS =====
 const totalReservationsEl = document.getElementById("totalReservations");
 const pendingReservationsEl = document.getElementById("pendingReservations");
 const approvedReservationsEl = document.getElementById("approvedReservations");
 const cancelledReservationsEl = document.getElementById("cancelledReservations");
 const totalRevenueEl = document.getElementById("totalRevenue");
 
-const reservationTableBody = document.getElementById("reservationTableBody");
-const searchInput = document.getElementById("searchInput");
-const statusFilter = document.getElementById("statusFilter");
-
-const detailsModal = document.getElementById("detailsModal");
-const modalBody = document.getElementById("modalBody");
-const closeModalBtn = document.getElementById("closeModalBtn");
 const logoutBtn = document.getElementById("logoutBtn");
 
+const searchInput = document.getElementById("searchInput");
+const statusFilter = document.getElementById("statusFilter");
+const reservationTableBody = document.getElementById("reservationTableBody");
+
+const modalBody = document.getElementById("modalBody");
+const detailsModal = document.getElementById("detailsModal");
+
+// ===== CHARTS =====
+let revenueChart, statusChart, bookingsChart;
+
+// ===== INIT =====
 document.addEventListener("DOMContentLoaded", async () => {
   bindEvents();
   await initialLoad();
 });
 
+// ===== LOAD =====
 async function initialLoad() {
-  const success = await loadReservations(true);
-
-  if (success) {
-    startAutoRefresh();
-  }
+  const success = await loadAnalytics(true);
+  if (success) startAutoRefresh();
 }
 
-function bindEvents() {
-  if (searchInput) {
-    searchInput.addEventListener("input", applyFilters);
-  }
-
-  if (statusFilter) {
-    statusFilter.addEventListener("change", applyFilters);
-  }
-
-  if (closeModalBtn) {
-    closeModalBtn.addEventListener("click", closeModal);
-  }
-
-  if (detailsModal) {
-    detailsModal.addEventListener("click", (event) => {
-      if (event.target === detailsModal) {
-        closeModal();
-      }
-    });
-  }
-
-  document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && detailsModal && !detailsModal.classList.contains("hidden")) {
-      closeModal();
-    }
-  });
-
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", () => {
-      localStorage.removeItem("adminUser");
-      alert("Logged out successfully.");
-      window.location.href = "admin-login.html";
-    });
-  }
-}
-
-async function loadReservations(showLoading = true) {
+async function loadAnalytics() {
   try {
-    if (showLoading) {
-      setTableLoading();
-    }
+    const response = await fetch(DASHBOARD_ENDPOINT);
 
-    const response = await fetch(DASHBOARD_ENDPOINT, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json"
-      }
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Failed to load dashboard data. Status: ${response.status}. ${errorText}`);
-    }
+    if (!response.ok) throw new Error("API error");
 
     const data = await response.json();
 
@@ -94,40 +48,47 @@ async function loadReservations(showLoading = true) {
       ? data.map(normalizeReservation)
       : [];
 
-    apiOnline = true;
-    applyFilters();
+    filteredReservations = [...reservations];
+
     renderStats(reservations);
+    renderCharts(reservations);
+    renderTable(filteredReservations);
 
     return true;
   } catch (error) {
-    console.error("loadReservations error:", error);
-
-    apiOnline = false;
-    reservations = [];
-    filteredReservations = [];
-
+    console.error(error);
     renderStats([]);
-    renderTableError("Cannot connect to backend. Make sure the API is running.");
-
+    renderCharts([]);
+    renderTableError("Cannot connect to backend.");
     return false;
   }
 }
 
+// ===== AUTO REFRESH =====
 function startAutoRefresh() {
   stopAutoRefresh();
-
-  refreshTimer = setInterval(async () => {
-    await loadReservations(false);
-  }, 5000);
+  refreshTimer = setInterval(loadAnalytics, 5000);
 }
 
 function stopAutoRefresh() {
-  if (refreshTimer) {
-    clearInterval(refreshTimer);
-    refreshTimer = null;
-  }
+  if (refreshTimer) clearInterval(refreshTimer);
 }
 
+// ===== EVENTS =====
+function bindEvents() {
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", () => {
+      localStorage.removeItem("adminUser");
+      alert("Logged out successfully.");
+      window.location.href = "admin-login.html";
+    });
+  }
+
+  if (searchInput) searchInput.addEventListener("input", applyFilters);
+  if (statusFilter) statusFilter.addEventListener("change", applyFilters);
+}
+
+// ===== NORMALIZE =====
 function normalizeReservation(item) {
   return {
     reservation_id: item.reservation_id ?? 0,
@@ -143,210 +104,192 @@ function normalizeReservation(item) {
 function normalizeStatus(status) {
   if (!status) return "Pending";
 
-  const value = String(status).trim().toLowerCase();
-
+  const value = status.toLowerCase();
   if (value === "approved") return "Approved";
   if (value === "cancelled" || value === "canceled") return "Cancelled";
+
   return "Pending";
 }
 
+// ===== STATS =====
 function renderStats(data) {
   const total = data.length;
-  const pending = data.filter(item => item.reservation_status === "Pending").length;
-  const approved = data.filter(item => item.reservation_status === "Approved").length;
-  const cancelled = data.filter(item => item.reservation_status === "Cancelled").length;
+  const pending = data.filter(x => x.reservation_status === "Pending").length;
+  const approved = data.filter(x => x.reservation_status === "Approved").length;
+  const cancelled = data.filter(x => x.reservation_status === "Cancelled").length;
 
   const revenue = data
-    .filter(item => item.reservation_status === "Approved")
-    .reduce((sum, item) => sum + Number(item.total_amount || 0), 0);
+    .filter(x => x.reservation_status === "Approved")
+    .reduce((sum, x) => sum + x.total_amount, 0);
 
-  if (totalReservationsEl) totalReservationsEl.textContent = total;
-  if (pendingReservationsEl) pendingReservationsEl.textContent = pending;
-  if (approvedReservationsEl) approvedReservationsEl.textContent = approved;
-  if (cancelledReservationsEl) cancelledReservationsEl.textContent = cancelled;
-  if (totalRevenueEl) totalRevenueEl.textContent = formatCurrency(revenue);
+  totalReservationsEl.textContent = total;
+  pendingReservationsEl.textContent = pending;
+  approvedReservationsEl.textContent = approved;
+  cancelledReservationsEl.textContent = cancelled;
+  totalRevenueEl.textContent = formatCurrency(revenue);
 }
 
+// ===== CHARTS =====
+function renderCharts(data) {
+  const monthlyData = getMonthlyData(data);
+
+  // Revenue Chart
+  if (revenueChart) revenueChart.destroy();
+  revenueChart = new Chart(document.getElementById("revenueChart"), {
+    type: "line",
+    data: {
+      labels: monthlyData.labels,
+      datasets: [{
+        data: monthlyData.revenue,
+        borderColor: "#1aa39a",
+        fill: true
+      }]
+    }
+  });
+
+  // Status Chart
+  if (statusChart) statusChart.destroy();
+  statusChart = new Chart(document.getElementById("statusChart"), {
+    type: "pie",
+    data: {
+      labels: ["Pending", "Approved", "Cancelled"],
+      datasets: [{
+        data: [
+          data.filter(x => x.reservation_status === "Pending").length,
+          data.filter(x => x.reservation_status === "Approved").length,
+          data.filter(x => x.reservation_status === "Cancelled").length
+        ]
+      }]
+    }
+  });
+
+  // Bookings Chart
+  if (bookingsChart) bookingsChart.destroy();
+  bookingsChart = new Chart(document.getElementById("bookingsChart"), {
+    type: "bar",
+    data: {
+      labels: monthlyData.labels,
+      datasets: [{
+        data: monthlyData.bookings
+      }]
+    }
+  });
+}
+
+// ===== MONTHLY DATA =====
+function getMonthlyData(data) {
+  const now = new Date();
+  const labels = [];
+  const revenue = [];
+  const bookings = [];
+
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+
+    labels.push(d.toLocaleDateString("en-US", { month: "short" }));
+
+    revenue.push(
+      data
+        .filter(x => x.event_date.startsWith(key) && x.reservation_status === "Approved")
+        .reduce((sum, x) => sum + x.total_amount, 0)
+    );
+
+    bookings.push(
+      data.filter(x => x.event_date.startsWith(key)).length
+    );
+  }
+
+  return { labels, revenue, bookings };
+}
+
+// ===== FILTER =====
 function applyFilters() {
-  const searchValue = (searchInput?.value || "").trim().toLowerCase();
-  const selectedStatus = statusFilter?.value || "all";
+  const search = searchInput.value.toLowerCase();
+  const status = statusFilter.value;
 
-  filteredReservations = reservations.filter((item) => {
-    const matchesSearch =
-      item.full_name.toLowerCase().includes(searchValue) ||
-      item.event_type.toLowerCase().includes(searchValue) ||
-      item.venue.toLowerCase().includes(searchValue) ||
-      String(item.reservation_id).includes(searchValue);
+  filteredReservations = reservations.filter(r => {
+    const matchSearch =
+      r.full_name.toLowerCase().includes(search) ||
+      r.event_type.toLowerCase().includes(search) ||
+      r.venue.toLowerCase().includes(search);
 
-    const matchesStatus =
-      selectedStatus === "all" || item.reservation_status === selectedStatus;
+    const matchStatus =
+      status === "all" || r.reservation_status === status;
 
-    return matchesSearch && matchesStatus;
+    return matchSearch && matchStatus;
   });
 
   renderTable(filteredReservations);
 }
 
+// ===== TABLE =====
 function renderTable(data) {
-  if (!reservationTableBody) return;
-
   if (!data.length) {
-    reservationTableBody.innerHTML = `
-      <tr>
-        <td colspan="8" class="empty-state">No reservations found.</td>
-      </tr>
-    `;
+    reservationTableBody.innerHTML =
+      `<tr><td colspan="8">No data</td></tr>`;
     return;
   }
 
-  reservationTableBody.innerHTML = data.map((item) => {
-    const statusClass = item.reservation_status.toLowerCase();
-
-    return `
-      <tr>
-        <td>#${item.reservation_id}</td>
-        <td>${escapeHtml(item.full_name)}</td>
-        <td>${escapeHtml(item.event_type)}</td>
-        <td>${formatDate(item.event_date)}</td>
-        <td>${escapeHtml(item.venue)}</td>
-        <td>${formatCurrency(item.total_amount)}</td>
-        <td>
-          <span class="status ${statusClass}">
-            ${escapeHtml(item.reservation_status)}
-          </span>
-        </td>
-        <td>
-          <div class="actions">
-            <button class="btn btn-view" type="button" data-id="${item.reservation_id}">
-              View
-            </button>
-          </div>
-        </td>
-      </tr>
-    `;
-  }).join("");
-
-  bindTableActions();
+  reservationTableBody.innerHTML = data.map(r => `
+    <tr>
+      <td>#${r.reservation_id}</td>
+      <td>${escapeHtml(r.full_name)}</td>
+      <td>${escapeHtml(r.event_type)}</td>
+      <td>${formatDate(r.event_date)}</td>
+      <td>${escapeHtml(r.venue)}</td>
+      <td>${formatCurrency(r.total_amount)}</td>
+      <td>${r.reservation_status}</td>
+      <td>
+        <button onclick="viewDetails(${r.reservation_id})">View</button>
+      </td>
+    </tr>
+  `).join("");
 }
 
-function bindTableActions() {
-  if (!reservationTableBody) return;
-
-  const viewButtons = reservationTableBody.querySelectorAll(".btn-view");
-
-  viewButtons.forEach((button) => {
-    button.addEventListener("click", () => {
-      const id = Number(button.dataset.id);
-      if (!id) return;
-
-      viewDetails(id);
-    });
-  });
-}
-
+// ===== VIEW DETAILS =====
 function viewDetails(id) {
-  const reservation = reservations.find((item) => item.reservation_id === id);
-
-  if (!reservation) {
-    alert("Reservation not found.");
-    return;
-  }
-
-  if (!modalBody || !detailsModal) return;
+  const r = reservations.find(x => x.reservation_id === id);
+  if (!r) return alert("Not found");
 
   modalBody.innerHTML = `
-    <div class="detail-grid">
-      <div class="detail-item">
-        <span>Reservation ID</span>
-        <strong>#${reservation.reservation_id}</strong>
-      </div>
-
-      <div class="detail-item">
-        <span>Client Name</span>
-        <strong>${escapeHtml(reservation.full_name)}</strong>
-      </div>
-
-      <div class="detail-item">
-        <span>Event Type</span>
-        <strong>${escapeHtml(reservation.event_type)}</strong>
-      </div>
-
-      <div class="detail-item">
-        <span>Event Date</span>
-        <strong>${formatDate(reservation.event_date)}</strong>
-      </div>
-
-      <div class="detail-item">
-        <span>Venue</span>
-        <strong>${escapeHtml(reservation.venue)}</strong>
-      </div>
-
-      <div class="detail-item">
-        <span>Status</span>
-        <strong>${escapeHtml(reservation.reservation_status)}</strong>
-      </div>
-
-      <div class="detail-item span-full">
-        <span>Total Amount</span>
-        <strong>${formatCurrency(reservation.total_amount)}</strong>
-      </div>
-    </div>
+    <p><b>Name:</b> ${r.full_name}</p>
+    <p><b>Event:</b> ${r.event_type}</p>
+    <p><b>Date:</b> ${formatDate(r.event_date)}</p>
+    <p><b>Venue:</b> ${r.venue}</p>
+    <p><b>Status:</b> ${r.reservation_status}</p>
+    <p><b>Total:</b> ${formatCurrency(r.total_amount)}</p>
   `;
 
   detailsModal.classList.remove("hidden");
 }
 
 function closeModal() {
-  if (detailsModal) {
-    detailsModal.classList.add("hidden");
-  }
+  detailsModal.classList.add("hidden");
 }
 
-function setTableLoading() {
-  if (!reservationTableBody) return;
-
-  reservationTableBody.innerHTML = `
-    <tr>
-      <td colspan="8" class="empty-state">Loading reservations...</td>
-    </tr>
-  `;
-}
-
-function renderTableError(message) {
-  if (!reservationTableBody) return;
-
-  reservationTableBody.innerHTML = `
-    <tr>
-      <td colspan="8" class="empty-state">${escapeHtml(message)}</td>
-    </tr>
-  `;
-}
-
+// ===== UTIL =====
 function formatCurrency(amount) {
   return new Intl.NumberFormat("en-PH", {
     style: "currency",
     currency: "PHP"
-  }).format(Number(amount || 0));
+  }).format(amount);
 }
 
-function formatDate(dateString) {
-  if (!dateString) return "N/A";
-
-  const date = new Date(dateString);
-  if (isNaN(date.getTime())) return escapeHtml(String(dateString));
-
-  return date.toLocaleDateString("en-PH", {
-    year: "numeric",
-    month: "short",
-    day: "numeric"
-  });
+function formatDate(dateStr) {
+  if (!dateStr) return "N/A";
+  const d = new Date(dateStr);
+  return isNaN(d) ? dateStr : d.toLocaleDateString();
 }
 
-function escapeHtml(value) {
-  return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+function escapeHtml(text) {
+  return text
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;");
+}
+
+function renderTableError(msg) {
+  reservationTableBody.innerHTML =
+    `<tr><td colspan="8">${msg}</td></tr>`;
 }

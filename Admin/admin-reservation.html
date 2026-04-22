@@ -12,7 +12,7 @@
     rel="stylesheet"
   >
 
-  <link rel="stylesheet" href="admin-dashboard.css" />
+  <link rel="stylesheet" href="admin-reservation.css" />
 </head>
 <body>
   <div class="dashboard">
@@ -24,8 +24,8 @@
         </div>
 
         <nav class="sidebar-nav">
-          <a href="#" class="active">Dashboard</a>
-          <a href="admin-reservation.html">Reservations</a>
+          <a href="admin-dashboard.html" >Dashboard</a>
+          <a href="#" class="active">Reservations</a>
           <a href="#">Clients</a>
           <a href="#">Reports</a>
           <a href="#">Settings</a>
@@ -40,8 +40,8 @@
     <main class="main-content">
       <header class="topbar">
         <div>
-          <h2>Admin Dashboard</h2>
-          <p>Monitor business performance and growth insights.</p>
+          <h2>Admin Reservations</h2>
+          <p>Manage reservations and monitor booking status.</p>
         </div>
 
         <div class="admin-chip">
@@ -82,25 +82,46 @@
 
       <section class="panel">
         <div class="panel-header">
-          <h3>Business Analytics</h3>
-          <p>Insights into your growing business performance.</p>
+          <div>
+            <h3>Reservation Management</h3>
+            <p>View reservation records from the dashboard view.</p>
+          </div>
+
+          <div class="panel-actions">
+            <input
+              type="text"
+              id="searchInput"
+              placeholder="Search client, venue, event type..."
+            />
+            <select id="statusFilter">
+              <option value="all">All Status</option>
+              <option value="Pending">Pending</option>
+              <option value="Approved">Approved</option>
+              <option value="Cancelled">Cancelled</option>
+            </select>
+          </div>
         </div>
 
-        <div class="charts-grid">
-          <div class="chart-container">
-            <h4>Revenue Trend</h4>
-            <canvas id="revenueChart"></canvas>
-          </div>
-
-          <div class="chart-container">
-            <h4>Reservation Status</h4>
-            <canvas id="statusChart"></canvas>
-          </div>
-
-          <div class="chart-container">
-            <h4>Monthly Bookings</h4>
-            <canvas id="bookingsChart"></canvas>
-          </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Client</th>
+                <th>Event Type</th>
+                <th>Event Date</th>
+                <th>Venue</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="reservationTableBody">
+              <tr>
+                <td colspan="8" class="empty-state">Loading reservations...</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </section>
     </main>
@@ -117,7 +138,6 @@
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="admin-dashboard.js"></script>
+  <script src="admin-reservation.js"></script>
 </body>
 </html>
