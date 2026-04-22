@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard | BM's Catering Services</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  >
+
+  <link rel="stylesheet" href="admin-dashboard.css" />
+</head>
+<body>
+  <div class="dashboard">
+    <aside class="sidebar">
+      <div>
+        <div class="brand">
+          <h1>BM's</h1>
+          <p>Admin Panel</p>
+        </div>
+
+        <nav class="sidebar-nav">
+          <a href="#" class="active">Dashboard</a>
+          <a href="#">Reservations</a>
+          <a href="#">Clients</a>
+          <a href="#">Reports</a>
+          <a href="#">Settings</a>
+        </nav>
+      </div>
+
+      <div class="sidebar-footer">
+        <button id="logoutBtn" class="logout-btn">Logout</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div>
+          <h2>Admin Dashboard</h2>
+          <p>Manage reservations and monitor booking status.</p>
+        </div>
+
+        <div class="admin-chip">
+          <div class="avatar">A</div>
+          <div>
+            <strong>Administrator</strong>
+            <span>BM's Catering</span>
+          </div>
+        </div>
+      </header>
+
+      <section class="stats-grid">
+        <div class="stat-card">
+          <span>Total Reservations</span>
+          <h3 id="totalReservations">0</h3>
+        </div>
+
+        <div class="stat-card">
+          <span>Pending</span>
+          <h3 id="pendingReservations">0</h3>
+        </div>
+
+        <div class="stat-card">
+          <span>Approved</span>
+          <h3 id="approvedReservations">0</h3>
+        </div>
+
+        <div class="stat-card">
+          <span>Cancelled</span>
+          <h3 id="cancelledReservations">0</h3>
+        </div>
+
+        <div class="stat-card revenue-card">
+          <span>Total Revenue</span>
+          <h3 id="totalRevenue">₱0.00</h3>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Reservation Management</h3>
+            <p>View reservation records from the dashboard view.</p>
+          </div>
+
+          <div class="panel-actions">
+            <input
+              type="text"
+              id="searchInput"
+              placeholder="Search client, venue, event type..."
+            />
+            <select id="statusFilter">
+              <option value="all">All Status</option>
+              <option value="Pending">Pending</option>
+              <option value="Approved">Approved</option>
+              <option value="Cancelled">Cancelled</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Client</th>
+                <th>Event Type</th>
+                <th>Event Date</th>
+                <th>Venue</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="reservationTableBody">
+              <tr>
+                <td colspan="8" class="empty-state">Loading reservations...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal-backdrop hidden" id="detailsModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Reservation Details</h3>
+        <button class="close-btn" id="closeModalBtn" type="button">&times;</button>
+      </div>
+
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+
+  <script src="admin-dashboard.js"></script>
+</body>
+</html>
