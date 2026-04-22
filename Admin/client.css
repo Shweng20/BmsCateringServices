@@ -1,4 +1,197 @@
-/* ===== CLIENT TABLE FIX (ALIGNMENT) ===== */
+:root {
+  --bg: #f5f7f8;
+  --surface: #ffffff;
+  --sidebar: #0f3d3e;
+  --sidebar-hover: #145355;
+  --primary: #0f3d3e;
+  --accent: #1aa39a;
+  --text: #1f2937;
+  --muted: #6b7280;
+  --border: #e5e7eb;
+  --shadow: 0 12px 30px rgba(15, 61, 62, 0.08);
+  --radius: 18px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Inter", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.dashboard {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  min-height: 100vh;
+}
+
+.sidebar {
+  background: var(--sidebar);
+  color: #fff;
+  padding: 28px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.main-content {
+  padding: 28px;
+}
+
+.brand h1 {
+  margin: 0;
+  font-family: "Playfair Display", serif;
+  font-size: 30px;
+}
+
+.brand p {
+  margin: 6px 0 0;
+  color: rgba(255,255,255,0.75);
+  font-size: 14px;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 30px;
+}
+
+.sidebar-nav a {
+  text-decoration: none;
+  color: #fff;
+  padding: 12px 14px;
+  border-radius: 12px;
+  transition: 0.2s;
+  font-weight: 500;
+}
+
+.sidebar-nav a:hover,
+.sidebar-nav a.active {
+  background: var(--sidebar-hover);
+}
+
+.logout-btn {
+  width: 100%;
+  border: none;
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+  padding: 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.logout-btn:hover {
+  background: rgba(255,255,255,0.2);
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.topbar h2 {
+  margin: 0;
+  font-size: 30px;
+}
+
+.topbar p {
+  margin: 6px 0 0;
+  color: var(--muted);
+}
+
+.admin-chip {
+  background: var(--surface);
+  border-radius: 999px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: var(--shadow);
+}
+
+.avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: white;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+}
+
+.admin-info strong {
+  display: block;
+  font-size: 16px;
+}
+
+.admin-info span {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.panel {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.panel-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.panel-header h3 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.panel-header p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.panel-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.panel-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.panel-actions input {
+  border: 1px solid var(--border);
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  outline: none;
+  background: #fff;
+  min-width: 260px;
+  flex: 1;
+}
+
+.panel-actions input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(26, 163, 154, 0.15);
+}
 
 .table-wrap {
   width: 100%;
@@ -6,57 +199,63 @@
   padding: 10px 0;
 }
 
-/* Force proper table structure */
 table {
   width: 100%;
   border-collapse: collapse;
   min-width: 900px;
+  table-layout: fixed;
 }
 
-/* FIX HEADER ALIGNMENT */
-thead tr {
+thead {
   background: #f9fafb;
 }
 
-th {
-  text-align: left;
-  padding: 16px 18px;
-  font-size: 13px;
-  color: var(--muted);
-  font-weight: 600;
-  white-space: nowrap;
-  border-bottom: 1px solid var(--border);
-}
-
-/* FIX BODY ALIGNMENT */
+th,
 td {
+  text-align: left;
   padding: 16px 18px;
   border-bottom: 1px solid var(--border);
   font-size: 14px;
-  vertical-align: middle;
   white-space: nowrap;
 }
 
-/* Center numeric column (Total Reservations) */
-td:nth-child(5),
-th:nth-child(5) {
-  text-align: center;
-}
-
-/* Improve spacing of panel */
-.panel {
-  padding-bottom: 10px;
-}
-
-/* FIX loading text alignment */
-.empty-state {
-  text-align: center;
-  padding: 40px;
+th {
   color: var(--muted);
-  font-size: 15px;
+  font-weight: 600;
 }
 
-/* Row hover fix */
+th:nth-child(1) { width: 90px; }
+th:nth-child(2) { width: 250px; }
+th:nth-child(3) { width: 260px; }
+th:nth-child(4) { width: 180px; }
+th:nth-child(5) { width: 180px; text-align: center; }
+
+td:nth-child(5) {
+  text-align: center;
+}
+
 tbody tr:hover {
   background: #f9fafb;
+}
+
+.empty-state {
+  text-align: center;
+  color: var(--muted);
+  padding: 40px 0;
+}
+
+@media (max-width: 860px) {
+  .dashboard {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    display: none;
+  }
+
+  .topbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
 }

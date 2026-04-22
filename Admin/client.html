@@ -5,9 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Clients | BM's Catering</title>
 
-  <link rel="stylesheet" href="admin-dashboard.css">
-</head>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
+  <link rel="stylesheet" href="client.css">
+</head>
 <body>
 
 <div class="dashboard">
@@ -40,36 +43,57 @@
         <h2>Clients</h2>
         <p>List of all clients who made reservations.</p>
       </div>
+
+      <div class="admin-chip">
+        <div class="avatar">A</div>
+        <div class="admin-info">
+          <strong>Administrator</strong>
+          <span>BM's Catering</span>
+        </div>
+      </div>
     </header>
 
     <!-- CLIENT TABLE -->
     <section class="panel">
 
-      <div class="panel-header">
-        <h3>Client Records</h3>
-      </div>
+      <section class="panel">
 
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Full Name</th>
-              <th>Address</th>
-              <th>Contact</th>
-              <th>Total Reservations</th>
-            </tr>
-          </thead>
+  <div class="panel-header">
+    <div>
+      <h3>Client Records</h3>
+      <p>Manage and review all client reservation records.</p>
+    </div>
 
-          <tbody id="clientTableBody">
-            <tr>
-              <td colspan="5" class="empty-state">Loading clients...</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+    <div class="panel-actions">
+      <input
+        type="text"
+        id="clientSearch"
+        placeholder="Search client by name..."
+      >
+    </div>
+  </div>
 
-    </section>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Full Name</th>
+          <th>Address</th>
+          <th>Contact</th>
+          <th>Total Reservations</th>
+        </tr>
+      </thead>
+
+      <tbody id="clientTableBody">
+        <tr>
+          <td colspan="5" class="empty-state">Loading clients...</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</section>
 
   </main>
 
