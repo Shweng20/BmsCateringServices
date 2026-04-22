@@ -45,7 +45,7 @@ const API_BASE_URL = "https://localhost:7241/api";
           }
 
           setTimeout(() => {
-            window.location.href = "index.html";
+            window.location.href = "admin-dashboard.html";
           }, 1000);
         } else {
           messageEl.textContent = result.message || "Invalid admin credentials.";

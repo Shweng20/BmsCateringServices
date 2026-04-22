@@ -10,7 +10,6 @@
   <link rel="stylesheet" href="style.css" />
   <link rel="icon" href="data:,">
 </head>
-
 <body>
   <header class="site-header">
     <div class="container nav">
@@ -33,11 +32,13 @@
 
         <a class="btn btn--login" href="UserLogin/login.html" id="loginNavBtn">Client Login</a>
 
-        <div class="profile-menu" id="profileMenu">
+        <div class="profile-menu" id="profileMenu" style="display: none;">
           <button type="button" class="profile-chip" id="profileToggleBtn">
             <span class="profile-avatar" id="navAvatar">U</span>
             <span class="profile-name" id="navUserName">My Account</span>
-            <svg class="profile-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            <svg class="profile-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
           </button>
 
           <div class="profile-dropdown" id="profileDropdown">
@@ -46,8 +47,8 @@
               <small id="dropdownUserEmail">user@email.com</small>
             </div>
 
-            <a href="profile.html" class="dropdown-item">My Profile</a>
-            <a href="reservation.html" class="dropdown-item">My Bookings</a>
+            <a href="profile/profile.html" class="dropdown-item">My Profile</a>
+            <a href="reservation/reservation.html" class="dropdown-item">My Bookings</a>
             <button type="button" class="dropdown-item text-danger" id="logoutBtn">Logout</button>
           </div>
         </div>
@@ -68,7 +69,7 @@
         </p>
 
         <div class="hero__actions">
-          <a class="btn btn--accent" href="package.html">Book your event</a>
+          <a class="btn btn--accent" href="package/package.html">Book your event</a>
           <a class="btn btn--ghost" href="#packages">View Packages</a>
         </div>
       </div>
@@ -175,8 +176,8 @@
                 <span>No maximum limit</span>
               </div>
 
-              <div class="pkg__meta">Starts at <strong>₱500 / pax</strong></div>
-              <a class="btn btn--primary btn--block" href="package.html">Choose Package</a>
+              <div class="pkg__meta">Starts at <strong>₱16,000 / additional 400 per head if it exceed the minimum pax</strong></div>
+              <a class="btn btn--primary btn--block" href="package/package.html">Choose Package</a>
             </div>
           </article>
 
@@ -200,8 +201,8 @@
                 <span>No maximum limit</span>
               </div>
 
-              <div class="pkg__meta">Starts at <strong>₱750 / pax</strong></div>
-              <a class="btn btn--primary btn--block" href="package.html">Choose Package</a>
+              <div class="pkg__meta">Starts at <strong>₱16,000 / additional 400 per head if it exceed the minimum pax</strong></div>
+              <a class="btn btn--primary btn--block" href="package/package.html">Choose Package</a>
             </div>
           </article>
 
@@ -226,7 +227,7 @@
               </div>
 
               <div class="pkg__meta">Custom Pricing Available</div>
-              <a class="btn btn--primary btn--block" href="package.html">Inquire Now</a>
+              <a class="btn btn--primary btn--block" href="package/package.html">Inquire Now</a>
             </div>
           </article>
         </div>
@@ -331,7 +332,7 @@
         </div>
 
         <div class="footer__cta">
-          <a class="btn btn--accent" href="login.html">Client Login</a>
+          <a class="btn btn--accent" href="UserLogin/login.html">Client Login</a>
         </div>
       </div>
     </footer>
@@ -344,7 +345,8 @@
 
       try {
         return JSON.parse(raw);
-      } catch {
+      } catch (error) {
+        console.error("Invalid clientUser in localStorage:", error);
         return null;
       }
     }
@@ -359,18 +361,20 @@
       const dropdownUserName = document.getElementById("dropdownUserName");
       const dropdownUserEmail = document.getElementById("dropdownUserEmail");
 
+      if (!loginNavBtn || !profileMenu) return;
+
       if (client && client.full_name) {
         loginNavBtn.style.display = "none";
         profileMenu.style.display = "block";
 
         const fullName = client.full_name || "User";
         const email = client.email || "";
-        const firstLetter = fullName.trim().charAt(0).toUpperCase();
+        const firstLetter = fullName.trim().charAt(0).toUpperCase() || "U";
 
-        navAvatar.textContent = firstLetter;
-        navUserName.textContent = fullName.split(" ")[0];
-        dropdownUserName.textContent = fullName;
-        dropdownUserEmail.textContent = email;
+        if (navAvatar) navAvatar.textContent = firstLetter;
+        if (navUserName) navUserName.textContent = fullName.split(" ")[0];
+        if (dropdownUserName) dropdownUserName.textContent = fullName;
+        if (dropdownUserEmail) dropdownUserEmail.textContent = email;
       } else {
         loginNavBtn.style.display = "inline-flex";
         profileMenu.style.display = "none";
@@ -384,20 +388,16 @@
       const dropdown = document.getElementById("profileDropdown");
       const logoutBtn = document.getElementById("logoutBtn");
 
-      if (toggleBtn) {
+      if (toggleBtn && dropdown) {
         toggleBtn.addEventListener("click", function (e) {
           e.stopPropagation();
           dropdown.classList.toggle("show");
         });
-      }
 
-      document.addEventListener("click", function () {
-        if (dropdown) {
+        document.addEventListener("click", function () {
           dropdown.classList.remove("show");
-        }
-      });
+        });
 
-      if (dropdown) {
         dropdown.addEventListener("click", function (e) {
           e.stopPropagation();
         });
@@ -407,7 +407,7 @@
         logoutBtn.addEventListener("click", function () {
           localStorage.removeItem("clientUser");
           localStorage.removeItem("clientToken");
-          window.location.href = "login.html";
+          window.location.href = "UserLogin/login.html";
         });
       }
     });
