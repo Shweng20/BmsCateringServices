@@ -1,0 +1,62 @@
+/* ===== CLIENT TABLE FIX (ALIGNMENT) ===== */
+
+.table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  padding: 10px 0;
+}
+
+/* Force proper table structure */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 900px;
+}
+
+/* FIX HEADER ALIGNMENT */
+thead tr {
+  background: #f9fafb;
+}
+
+th {
+  text-align: left;
+  padding: 16px 18px;
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 600;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--border);
+}
+
+/* FIX BODY ALIGNMENT */
+td {
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+/* Center numeric column (Total Reservations) */
+td:nth-child(5),
+th:nth-child(5) {
+  text-align: center;
+}
+
+/* Improve spacing of panel */
+.panel {
+  padding-bottom: 10px;
+}
+
+/* FIX loading text alignment */
+.empty-state {
+  text-align: center;
+  padding: 40px;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+/* Row hover fix */
+tbody tr:hover {
+  background: #f9fafb;
+}

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Clients | BM's Catering</title>
+
+  <link rel="stylesheet" href="admin-dashboard.css">
+</head>
+
+<body>
+
+<div class="dashboard">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div>
+      <div class="brand">
+        <h1>BM's Catering</h1>
+        <p>Admin Panel</p>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="admin-dashboard.html">Dashboard</a>
+        <a href="admin-reservation.html">Reservations</a>
+        <a href="#" class="active">Clients</a>
+        <a href="#">Reports</a>
+        <a href="#">Settings</a>
+      </nav>
+    </div>
+
+    <button class="logout-btn">Logout</button>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main-content">
+
+    <header class="topbar">
+      <div>
+        <h2>Clients</h2>
+        <p>List of all clients who made reservations.</p>
+      </div>
+    </header>
+
+    <!-- CLIENT TABLE -->
+    <section class="panel">
+
+      <div class="panel-header">
+        <h3>Client Records</h3>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Full Name</th>
+              <th>Address</th>
+              <th>Contact</th>
+              <th>Total Reservations</th>
+            </tr>
+          </thead>
+
+          <tbody id="clientTableBody">
+            <tr>
+              <td colspan="5" class="empty-state">Loading clients...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </section>
+
+  </main>
+
+</div>
+
+<script src="admin-clients.js"></script>
+
+</body>
+</html>
