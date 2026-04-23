@@ -1,23 +1,30 @@
 document.addEventListener("DOMContentLoaded", async () => {
   const PACKAGE_API = "https://localhost:7241/Package";
+  const REPORT_API = "https://localhost:7241/api/Report/most-booked-package";
 
   const loadingState = document.getElementById("loadingState");
   const errorState = document.getElementById("errorState");
   const emptyState = document.getElementById("emptyState");
   const packageGrid = document.getElementById("packageGrid");
 
-  function getPackageImage(packageName) {
-    const name = (packageName || "").toLowerCase();
+  let mostBookedPackageName = null;
 
-    if (name.includes("package 1") || name.includes("1")) {
+  function normalizeName(value) {
+    return String(value || "").trim().toLowerCase();
+  }
+
+  function getPackageImage(packageName) {
+    const name = normalizeName(packageName);
+
+    if (name.includes("basic") || name.includes("package 1") || name.includes("1")) {
       return "https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=1200&auto=format&fit=crop";
     }
 
-    if (name.includes("package 2") || name.includes("2")) {
+    if (name.includes("standard") || name.includes("package 2") || name.includes("2")) {
       return "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?q=80&w=1200&auto=format&fit=crop";
     }
 
-    if (name.includes("package 3") || name.includes("3")) {
+    if (name.includes("premium") || name.includes("package 3") || name.includes("3")) {
       return "https://images.unsplash.com/photo-1464306076886-da185f6a9d05?q=80&w=1200&auto=format&fit=crop";
     }
 
@@ -39,21 +46,21 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function getBadge(status) {
-    const raw = (status || "Unavailable").trim().toLowerCase();
-
-    if (raw.includes("available")) {
-      return '<span class="badge badge--available">Available</span>';
-    }
+    const raw = normalizeName(status || "Unavailable");
 
     if (raw.includes("limited")) {
       return '<span class="badge badge--limited">Limited</span>';
+    }
+
+    if (raw.includes("available")) {
+      return '<span class="badge badge--available">Available</span>';
     }
 
     return '<span class="badge badge--unavailable">Unavailable</span>';
   }
 
   function getButtonText(status) {
-    const clean = (status || "").toLowerCase();
+    const clean = normalizeName(status);
 
     if (clean.includes("available") || clean.includes("limited")) {
       return "Choose Package";
@@ -62,15 +69,24 @@ document.addEventListener("DOMContentLoaded", async () => {
     return "Inquire Now";
   }
 
+  function isMostBooked(pkg) {
+    return normalizeName(pkg.package_name) === normalizeName(mostBookedPackageName);
+  }
+
   function createPackageCard(pkg) {
     const card = document.createElement("article");
-    card.className = "package-card";
+    const featured = isMostBooked(pkg);
+
+    card.className = featured
+      ? "package-card package-card--featured"
+      : "package-card";
 
     const imageUrl = getPackageImage(pkg.package_name);
     const paxValue = pkg.pax ?? 40;
 
     card.innerHTML = `
       <div class="package-card__image-wrap">
+        ${featured ? '<span class="featured-badge">Most Booked</span>' : ""}
         <img
           src="${imageUrl}"
           alt="${pkg.package_name || "Package"}"
@@ -112,7 +128,33 @@ document.addEventListener("DOMContentLoaded", async () => {
     return card;
   }
 
+  async function loadMostBookedPackage() {
+    try {
+      const response = await fetch(REPORT_API, {
+        method: "GET",
+        headers: {
+          Accept: "application/json"
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (Array.isArray(data) && data.length > 0) {
+        mostBookedPackageName = data[0].package_name || null;
+      }
+    } catch (error) {
+      console.error("Most booked package load error:", error);
+      mostBookedPackageName = null;
+    }
+  }
+
   try {
+    await loadMostBookedPackage();
+
     const response = await fetch(PACKAGE_API, {
       method: "GET",
       headers: {
@@ -125,13 +167,21 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     const data = await response.json();
-    const packages = (Array.isArray(data) ? data : []).filter(pkg => !pkg.is_deleted);
+    let packages = (Array.isArray(data) ? data : []).filter(pkg => !pkg.is_deleted);
 
     loadingState.classList.add("hidden");
 
     if (packages.length === 0) {
       emptyState.classList.remove("hidden");
       return;
+    }
+
+    if (mostBookedPackageName) {
+      packages = packages.sort((a, b) => {
+        const aFeatured = isMostBooked(a) ? 1 : 0;
+        const bFeatured = isMostBooked(b) ? 1 : 0;
+        return bFeatured - aFeatured;
+      });
     }
 
     packageGrid.innerHTML = "";
@@ -141,6 +191,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 
     packageGrid.classList.remove("hidden");
+
+    setTimeout(() => {
+      const featuredCard = document.querySelector(".package-card--featured");
+      if (featuredCard) {
+        featuredCard.scrollIntoView({
+          behavior: "smooth",
+          block: "center"
+        });
+      }
+    }, 250);
   } catch (error) {
     console.error("Package load error:", error);
     loadingState.classList.add("hidden");
