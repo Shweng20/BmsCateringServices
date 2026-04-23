@@ -747,10 +747,7 @@ button, input, textarea, select, a {
   }
 }
 
-@media (max-width: 992px) {
-  .booking-grid {
-    grid-template-columns: 1fr;
-  }
+
 
   .section {
     padding: 56px 0;
@@ -774,7 +771,7 @@ button, input, textarea, select, a {
   .menu-search {
     max-width: none;
   }
-}
+
 
 @media (max-width: 768px) {
   .nav__links {
@@ -821,74 +818,58 @@ button, input, textarea, select, a {
 
 
 .buffet-layout {
+  margin-top: 24px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  margin-top: 24px;
+  gap: 14px;
+}
+
+.buffet-dropdown {
+  border: 1px solid #dcdcdc;
+  border-radius: 14px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.buffet-toggle {
+  width: 100%;
+  border: none;
+  background: #fff;
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f3d3e;
+}
+
+.buffet-toggle:hover {
+  background: #f8fafa;
+}
+
+
+.buffet-content {
+  display: none;
+  border-top: 1px solid #ececec;
+  padding: 18px;
+}
+
+.buffet-dropdown.active .buffet-content {
+  display: block;
 }
 
 .buffet-card {
   background: #fff;
-  border: 1px solid #dcdcdc;
-  border-radius: 16px;
-  padding: 24px;
-}
-
-.buffet-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-  margin-bottom: 20px;
-}
-
-.buffet-title {
-  display: flex;
-  align-items: flex-end;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.buffet-label {
-  width: 100%;
-  font-size: 12px;
-  color: #666;
-  text-transform: uppercase;
-  line-height: 1;
-}
-
-.buffet-title h2 {
-  margin: 0;
-  font-size: 52px;
-  line-height: 1;
-  color: #0f3d3e;
-  font-family: "Playfair Display", serif;
-}
-
-.buffet-subtitle {
-  font-size: 22px;
-  font-weight: 700;
-  color: #0f3d3e;
-  line-height: 1.1;
-}
-
-.buffet-price-box {
-  min-width: 120px;
-  padding: 12px 18px;
-  border: 1px solid #ddd;
-  border-radius: 12px;
-  background: #fff;
-  text-align: center;
-}
-
-.buffet-price-box strong {
-  display: block;
-  font-size: 20px;
-  color: #0f3d3e;
-  line-height: 1.2;
 }
 
 .buffet-section {
+  margin-top: 0;
+}
+
+.buffet-section + .buffet-section {
   margin-top: 20px;
 }
 
@@ -911,11 +892,11 @@ button, input, textarea, select, a {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 58px;
+  min-height: 56px;
   background: #f8f8f8;
   border: 1px solid #ececec;
   border-radius: 10px;
-  padding: 14px 16px;
+  padding: 12px 14px;
   text-align: center;
 }
 
@@ -930,8 +911,7 @@ button, input, textarea, select, a {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 18px;
-  margin-top: 24px;
-  align-items: start;
+  margin-top: 22px;
 }
 
 .single-grid {
@@ -939,21 +919,13 @@ button, input, textarea, select, a {
 }
 
 @media (max-width: 768px) {
-  .buffet-top {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
   .buffet-grid,
   .buffet-bottom-sections {
     grid-template-columns: 1fr;
   }
 
-  .buffet-title h2 {
-    font-size: 42px;
-  }
-
-  .buffet-subtitle {
-    font-size: 18px;
+  .buffet-toggle {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
