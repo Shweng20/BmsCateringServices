@@ -818,3 +818,105 @@ button, input, textarea, select, a {
     max-width: 100%;
   }
 }
+.buffet-layout {
+  margin-top: 24px;
+}
+
+.buffet-card {
+  background: #fff;
+  border: 1px solid #dcdcdc;
+  border-radius: 16px;
+  padding: 24px;
+}
+
+.buffet-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.buffet-title {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.buffet-label {
+  width: 100%;
+  font-size: 12px;
+  color: #666;
+  text-transform: uppercase;
+}
+
+.buffet-title h2 {
+  margin: 0;
+  font-size: 52px;
+  line-height: 1;
+  color: #0f3d3e;
+  font-family: "Playfair Display", serif;
+}
+
+.buffet-subtitle {
+  font-size: 22px;
+  font-weight: 700;
+  color: #0f3d3e;
+}
+
+.buffet-price-box {
+  padding: 12px 18px;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.buffet-price-box strong {
+  font-size: 20px;
+  color: #0f3d3e;
+}
+
+.buffet-section {
+  margin-top: 20px;
+}
+
+.buffet-section h3 {
+  margin: 0 0 12px;
+  padding-bottom: 8px;
+  font-size: 18px;
+  color: #0f3d3e;
+  border-bottom: 1px solid #eee;
+  font-family: "Playfair Display", serif;
+}
+
+.buffet-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.buffet-item {
+  background: #f8f8f8;
+  border: 1px solid #ececec;
+  border-radius: 10px;
+  padding: 14px;
+  text-align: center;
+}
+
+.buffet-item p {
+  margin: 0;
+  font-size: 14px;
+  color: #333;
+  line-height: 1.4;
+}
+
+.buffet-bottom-sections {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-top: 24px;
+}
+
+.single-grid {
+  grid-template-columns: 1fr;
+}
