@@ -20,113 +20,169 @@ async function parseJsonSafe(response) {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
-  const forgotModal = document.getElementById("forgotPasswordModal");
+  const loginForm = document.getElementById("clientLoginForm");
+  const emailInput = document.getElementById("email");
+  const passwordInput = document.getElementById("password");
+  const loginMessage = document.getElementById("loginMessage");
+
+  const forgotPasswordModal = document.getElementById("forgotPasswordModal");
   const openForgotModalBtn = document.getElementById("openForgotModalBtn");
   const closeForgotModalBtn = document.getElementById("closeForgotModalBtn");
 
-  const clientLoginForm = document.getElementById("clientLoginForm");
   const forgotPasswordForm = document.getElementById("forgotPasswordForm");
-  const resetPasswordForm = document.getElementById("resetPasswordForm");
+  const forgotEmailInput = document.getElementById("forgot_email");
+  const forgotMessage = document.getElementById("forgotMessage");
 
+  const resetPasswordForm = document.getElementById("resetPasswordForm");
+  const resetEmailInput = document.getElementById("reset_email");
+  const resetCodeInput = document.getElementById("reset_code");
+  const newPasswordInput = document.getElementById("new_password");
+  const confirmNewPasswordInput = document.getElementById("confirm_new_password");
+  const resetMessage = document.getElementById("resetMessage");
+
+  function showMessage(element, message, isSuccess = false) {
+    if (!element) return;
+    element.textContent = message;
+    element.style.color = isSuccess ? "green" : "red";
+  }
+
+  async function parseJsonSafe(response) {
+    const rawText = await response.text();
+    console.log("Raw response:", rawText);
+
+    try {
+      return JSON.parse(rawText);
+    } catch (error) {
+      return {
+        success: false,
+        message: rawText || "Invalid server response."
+      };
+    }
+  }
+
+  // =========================
+  // TOGGLE PASSWORD
+  // =========================
   document.querySelectorAll(".toggle-password").forEach(button => {
     button.addEventListener("click", function () {
       const targetId = this.getAttribute("data-target");
-      const input = document.getElementById(targetId);
+      const targetInput = document.getElementById(targetId);
 
-      if (!input) return;
+      if (!targetInput) return;
 
-      if (input.type === "password") {
-        input.type = "text";
+      if (targetInput.type === "password") {
+        targetInput.type = "text";
         this.textContent = "Hide";
       } else {
-        input.type = "password";
+        targetInput.type = "password";
         this.textContent = "Show";
       }
     });
   });
 
-  if (openForgotModalBtn && forgotModal) {
-    openForgotModalBtn.addEventListener("click", function () {
-      forgotModal.classList.add("show");
-    });
-  }
+  // =========================
+  // LOGIN
+  // =========================
+  if (loginForm) {
+  loginForm.addEventListener("submit", async function (e) {
+    e.preventDefault();
 
-  if (closeForgotModalBtn && forgotModal) {
-    closeForgotModalBtn.addEventListener("click", function () {
-      forgotModal.classList.remove("show");
-    });
-  }
+    const email = emailInput?.value.trim();
+    const password = passwordInput?.value.trim();
 
-  if (forgotModal) {
-    forgotModal.addEventListener("click", function (e) {
-      if (e.target === forgotModal) {
-        forgotModal.classList.remove("show");
+    showMessage(loginMessage, "");
+
+    if (!email || !password) {
+      showMessage(loginMessage, "Please enter your email and password.");
+      return;
+    }
+
+    try {
+      const response = await fetch("https://localhost:7241/api/Client/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          email: email,
+          password: password
+        })
+      });
+
+      const result = await parseJsonSafe(response);
+
+      if (!response.ok) {
+        showMessage(loginMessage, result.message || "Login failed.");
+        console.error("Login failed:", result);
+        return;
       }
-    });
-  }
 
-  if (clientLoginForm) {
-    clientLoginForm.addEventListener("submit", async function (e) {
-      e.preventDefault();
-
-      const email = document.getElementById("email")?.value.trim() || "";
-      const password = document.getElementById("password")?.value.trim() || "";
-      const messageEl = document.getElementById("loginMessage");
-
-      if (!messageEl) return;
-
-      messageEl.textContent = "Logging in...";
-      messageEl.className = "login-message";
-
-      try {
-        const response = await fetch(`${API_BASE_URL}/Client/login`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            email: email,
-            password: password
-          })
-        });
-
-        const result = await parseJsonSafe(response);
-
-        if (response.ok) {
-          messageEl.textContent = result.message || "Login successful.";
-          messageEl.className = "login-message success";
-
-          localStorage.setItem("clientUser", JSON.stringify(result));
-
-          setTimeout(() => {
-            window.location.href = "../index.html";
-          }, 1000);
-        } else {
-          messageEl.textContent = result.message || "Login failed.";
-          messageEl.className = "login-message error";
+      if (!result.success) {
+        if (result.requiresVerification) {
+          showMessage(loginMessage, result.message || "Account requires verification.");
+          return;
         }
-      } catch (error) {
-        console.error("Login fetch error:", error);
-        messageEl.textContent = `Cannot connect to login API: ${error.message}`;
-        messageEl.className = "login-message error";
+
+        showMessage(loginMessage, result.message || "Login failed.");
+        return;
       }
+
+      if (result.client) {
+        localStorage.setItem("clientUser", JSON.stringify(result.client));
+        localStorage.setItem("clientId", result.client.client_id);
+      }
+
+      showMessage(loginMessage, result.message || "Login successful.", true);
+
+      setTimeout(() => {
+        window.location.href = "../index.html";
+      }, 1000);
+
+    } catch (error) {
+      console.error("Fetch/Login error:", error);
+      showMessage(loginMessage, "Unable to connect to the server.");
+    }
+  });
+}
+
+  // =========================
+  // OPEN/CLOSE FORGOT MODAL
+  // =========================
+  if (openForgotModalBtn && forgotPasswordModal) {
+    openForgotModalBtn.addEventListener("click", function () {
+      forgotPasswordModal.classList.add("show");
     });
   }
 
+  if (closeForgotModalBtn && forgotPasswordModal) {
+    closeForgotModalBtn.addEventListener("click", function () {
+      forgotPasswordModal.classList.remove("show");
+    });
+  }
+
+  window.addEventListener("click", function (e) {
+    if (e.target === forgotPasswordModal) {
+      forgotPasswordModal.classList.remove("show");
+    }
+  });
+
+  // =========================
+  // FORGOT PASSWORD
+  // =========================
   if (forgotPasswordForm) {
     forgotPasswordForm.addEventListener("submit", async function (e) {
       e.preventDefault();
 
-      const email = document.getElementById("forgot_email")?.value.trim() || "";
-      const messageEl = document.getElementById("forgotMessage");
+      const email = forgotEmailInput?.value.trim();
+      showMessage(forgotMessage, "");
 
-      if (!messageEl) return;
-
-      messageEl.textContent = "Sending verification code...";
-      messageEl.className = "login-message";
+      if (!email) {
+        showMessage(forgotMessage, "Please enter your email.");
+        return;
+      }
 
       try {
-        const response = await fetch(`${API_BASE_URL}/Client/forgot-password`, {
+        const response = await fetch("https://localhost:7241/api/Client/forgot-password", {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
@@ -138,47 +194,49 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const result = await parseJsonSafe(response);
 
-        if (response.ok) {
-          const resetEmail = document.getElementById("reset_email");
-          if (resetEmail) resetEmail.value = email;
+        if (!response.ok) {
+          showMessage(forgotMessage, result.message || "Failed to send verification code.");
+          return;
+        }
 
-          messageEl.textContent = result.message || "Verification code sent.";
-          messageEl.className = "login-message success";
-        } else {
-          messageEl.textContent = result.message || "Failed to send verification code.";
-          messageEl.className = "login-message error";
+        showMessage(forgotMessage, result.message || "Verification code sent.", true);
+
+        if (resetEmailInput) {
+          resetEmailInput.value = email;
         }
       } catch (error) {
         console.error("Forgot password error:", error);
-        messageEl.textContent = `Cannot connect to forgot password API: ${error.message}`;
-        messageEl.className = "login-message error";
+        showMessage(forgotMessage, "Unable to connect to the server.");
       }
     });
   }
 
+  // =========================
+  // RESET PASSWORD
+  // =========================
   if (resetPasswordForm) {
     resetPasswordForm.addEventListener("submit", async function (e) {
       e.preventDefault();
 
-      const email = document.getElementById("reset_email")?.value.trim() || "";
-      const code = document.getElementById("reset_code")?.value.trim() || "";
-      const newPassword = document.getElementById("new_password")?.value.trim() || "";
-      const confirmPassword = document.getElementById("confirm_new_password")?.value.trim() || "";
-      const messageEl = document.getElementById("resetMessage");
+      const email = resetEmailInput?.value.trim();
+      const code = resetCodeInput?.value.trim();
+      const newPassword = newPasswordInput?.value.trim();
+      const confirmPassword = confirmNewPasswordInput?.value.trim();
 
-      if (!messageEl) return;
+      showMessage(resetMessage, "");
 
-      if (newPassword !== confirmPassword) {
-        messageEl.textContent = "New password and confirm password do not match.";
-        messageEl.className = "login-message error";
+      if (!email || !code || !newPassword || !confirmPassword) {
+        showMessage(resetMessage, "Please fill in all fields.");
         return;
       }
 
-      messageEl.textContent = "Resetting password...";
-      messageEl.className = "login-message";
+      if (newPassword !== confirmPassword) {
+        showMessage(resetMessage, "Passwords do not match.");
+        return;
+      }
 
       try {
-        const response = await fetch(`${API_BASE_URL}/Client/reset-password`, {
+        const response = await fetch("https://localhost:7241/api/Client/reset-password", {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
@@ -186,42 +244,33 @@ document.addEventListener("DOMContentLoaded", function () {
           body: JSON.stringify({
             email: email,
             code: code,
-            new_password: newPassword,
-            confirm_password: confirmPassword
+            newPassword: newPassword
           })
         });
 
         const result = await parseJsonSafe(response);
 
-        if (response.ok) {
-          messageEl.textContent = result.message || "Password reset successfully.";
-          messageEl.className = "login-message success";
-
-          const forgotEmail = document.getElementById("forgot_email");
-          const resetEmail = document.getElementById("reset_email");
-          const resetCode = document.getElementById("reset_code");
-          const newPasswordInput = document.getElementById("new_password");
-          const confirmNewPasswordInput = document.getElementById("confirm_new_password");
-
-          if (forgotEmail) forgotEmail.value = "";
-          if (resetEmail) resetEmail.value = "";
-          if (resetCode) resetCode.value = "";
-          if (newPasswordInput) newPasswordInput.value = "";
-          if (confirmNewPasswordInput) confirmNewPasswordInput.value = "";
-
-          setTimeout(() => {
-            if (forgotModal) {
-              forgotModal.classList.remove("show");
-            }
-          }, 1200);
-        } else {
-          messageEl.textContent = result.message || "Failed to reset password.";
-          messageEl.className = "login-message error";
+        if (!response.ok) {
+          showMessage(resetMessage, result.message || "Password reset failed.");
+          return;
         }
+
+        if (!result.success) {
+          showMessage(resetMessage, result.message || "Password reset failed.");
+          return;
+        }
+
+        showMessage(resetMessage, result.message || "Password reset successful.", true);
+
+        setTimeout(() => {
+          forgotPasswordModal.classList.remove("show");
+          resetPasswordForm.reset();
+          forgotPasswordForm.reset();
+        }, 1200);
+
       } catch (error) {
         console.error("Reset password error:", error);
-        messageEl.textContent = `Cannot connect to reset password API: ${error.message}`;
-        messageEl.className = "login-message error";
+        showMessage(resetMessage, "Unable to connect to the server.");
       }
     });
   }

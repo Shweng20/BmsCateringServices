@@ -339,77 +339,99 @@
 
   <script>
     function getStoredClient() {
-      const raw = localStorage.getItem("clientUser");
-      if (!raw) return null;
+  const raw = localStorage.getItem("clientUser");
+  if (!raw) return null;
 
-      try {
-        return JSON.parse(raw);
-      } catch (error) {
-        console.error("Invalid clientUser in localStorage:", error);
-        return null;
-      }
+  try {
+    return JSON.parse(raw);
+  } catch (error) {
+    console.error("Invalid clientUser in localStorage:", error);
+    return null;
+  }
+}
+
+function setNavbarProfile() {
+  const client = getStoredClient();
+
+  const loginNavBtn = document.getElementById("loginNavBtn");
+  const profileMenu = document.getElementById("profileMenu");
+  const navAvatar = document.getElementById("navAvatar");
+  const navUserName = document.getElementById("navUserName");
+  const dropdownUserName = document.getElementById("dropdownUserName");
+  const dropdownUserEmail = document.getElementById("dropdownUserEmail");
+
+  if (!loginNavBtn || !profileMenu) return;
+
+  if (client && client.full_name) {
+    loginNavBtn.style.display = "none";
+    profileMenu.style.display = "block";
+
+    const fullName = client.full_name || "User";
+    const email = client.email || "";
+    const firstLetter = fullName.trim().charAt(0).toUpperCase() || "U";
+
+    if (navAvatar) navAvatar.textContent = firstLetter;
+    if (navUserName) navUserName.textContent = fullName.split(" ")[0];
+    if (dropdownUserName) dropdownUserName.textContent = fullName;
+    if (dropdownUserEmail) dropdownUserEmail.textContent = email;
+  } else {
+    loginNavBtn.style.display = "inline-flex";
+    profileMenu.style.display = "none";
+  }
+}
+
+async function fetchClientById() {
+  const clientId = localStorage.getItem("clientId");
+  if (!clientId) return;
+
+  try {
+    const response = await fetch(`https://localhost:7241/api/Client/${clientId}`);
+    const result = await response.json();
+
+    if (!response.ok || !result.success || !result.client) {
+      console.error("Failed to fetch client data:", result.message);
+      return;
     }
 
-    function setNavbarProfile() {
-      const client = getStoredClient();
+    localStorage.setItem("clientUser", JSON.stringify(result.client));
+    setNavbarProfile();
+  } catch (error) {
+    console.error("Fetch client by ID error:", error);
+  }
+}
 
-      const loginNavBtn = document.getElementById("loginNavBtn");
-      const profileMenu = document.getElementById("profileMenu");
-      const navAvatar = document.getElementById("navAvatar");
-      const navUserName = document.getElementById("navUserName");
-      const dropdownUserName = document.getElementById("dropdownUserName");
-      const dropdownUserEmail = document.getElementById("dropdownUserEmail");
+document.addEventListener("DOMContentLoaded", function () {
+  setNavbarProfile();
+  fetchClientById();
 
-      if (!loginNavBtn || !profileMenu) return;
+  const toggleBtn = document.getElementById("profileToggleBtn");
+  const dropdown = document.getElementById("profileDropdown");
+  const logoutBtn = document.getElementById("logoutBtn");
 
-      if (client && client.full_name) {
-        loginNavBtn.style.display = "none";
-        profileMenu.style.display = "block";
-
-        const fullName = client.full_name || "User";
-        const email = client.email || "";
-        const firstLetter = fullName.trim().charAt(0).toUpperCase() || "U";
-
-        if (navAvatar) navAvatar.textContent = firstLetter;
-        if (navUserName) navUserName.textContent = fullName.split(" ")[0];
-        if (dropdownUserName) dropdownUserName.textContent = fullName;
-        if (dropdownUserEmail) dropdownUserEmail.textContent = email;
-      } else {
-        loginNavBtn.style.display = "inline-flex";
-        profileMenu.style.display = "none";
-      }
-    }
-
-    document.addEventListener("DOMContentLoaded", function () {
-      setNavbarProfile();
-
-      const toggleBtn = document.getElementById("profileToggleBtn");
-      const dropdown = document.getElementById("profileDropdown");
-      const logoutBtn = document.getElementById("logoutBtn");
-
-      if (toggleBtn && dropdown) {
-        toggleBtn.addEventListener("click", function (e) {
-          e.stopPropagation();
-          dropdown.classList.toggle("show");
-        });
-
-        document.addEventListener("click", function () {
-          dropdown.classList.remove("show");
-        });
-
-        dropdown.addEventListener("click", function (e) {
-          e.stopPropagation();
-        });
-      }
-
-      if (logoutBtn) {
-        logoutBtn.addEventListener("click", function () {
-          localStorage.removeItem("clientUser");
-          localStorage.removeItem("clientToken");
-          window.location.href = "UserLogin/login.html";
-        });
-      }
+  if (toggleBtn && dropdown) {
+    toggleBtn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      dropdown.classList.toggle("show");
     });
+
+    document.addEventListener("click", function () {
+      dropdown.classList.remove("show");
+    });
+
+    dropdown.addEventListener("click", function (e) {
+      e.stopPropagation();
+    });
+  }
+
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", function () {
+      localStorage.removeItem("clientUser");
+      localStorage.removeItem("clientId");
+      localStorage.removeItem("clientToken");
+      window.location.href = "UserLogin/login.html";
+    });
+  }
+});
   </script>
 </body>
 </html>
