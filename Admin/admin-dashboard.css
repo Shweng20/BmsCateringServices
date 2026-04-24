@@ -213,22 +213,37 @@ body {
   padding: 20px;
 }
 
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  padding: 20px;
+}
+
 .chart-container {
   background: var(--surface);
   border-radius: var(--radius);
-  padding: 20px;
+  padding: 18px;
   box-shadow: var(--shadow);
+  height: 360px;
+  overflow: hidden;
 }
 
 .chart-container h4 {
-  margin: 0 0 16px 0;
+  margin: 0 0 12px 0;
   font-size: 18px;
   color: var(--text);
 }
 
+.chart-container canvas {
+  width: 100% !important;
+  height: 280px !important;
+  max-height: 280px !important;
+  display: block;
+}
+
 canvas {
   max-width: 100%;
-  height: auto;
 }
 
 .btn-view:hover {

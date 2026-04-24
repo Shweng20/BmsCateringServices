@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="payment.css" />
+</head>
+
+<body>
+    
+  <div class="payment-modal show" id="paymentModal">
+    <div class="payment-box">
+
+      <div class="payment-left">
+       <div class="qr-box">
+  <img src="../QRCODE.png" alt="InstaPay QR Code" class="qr-image">
+  <p>Scan to Pay</p>
+</div>
+
+        <div class="proof-box">
+          <label for="proofPayment">Proof of Payment</label>
+          <p>Upload a screenshot of your successful payment.</p>
+
+          <input
+            type="file"
+            id="proofPayment"
+            name="proofPayment"
+            accept="image/*"
+            required
+          >
+        </div>
+      </div>
+
+      <div class="payment-details">
+        <button class="payment-close" id="closePaymentModal" type="button">&times;</button>
+
+        <h2>Payment Details</h2>
+        <p class="payment-note">Please review your reservation payment before proceeding.</p>
+
+        <div class="payment-summary">
+          <div>
+            <span>Total Amount</span>
+            <strong id="paymentTotal">₱0.00</strong>
+          </div>
+
+          <div>
+            <span>Payment Method</span>
+            <strong>Cash / GCash / Bank</strong>
+          </div>
+        </div>
+
+        <div class="payment-methods">
+          <label>
+            <input type="radio" name="payment_method" value="cash" checked>
+            Cash Payment
+          </label>
+
+          <label>
+            <input type="radio" name="payment_method" value="gcash">
+            GCash
+          </label>
+
+          <label>
+            <input type="radio" name="payment_method" value="bank">
+            Bank Transfer
+          </label>
+        </div>
+
+        <div class="gcash-box">
+          <p><strong>GCash Name:</strong> JO***A V.</p>
+          <p><strong>GCash Number:</strong> 0921420****</p>
+        </div>
+
+        <div class="bank-box">
+          <p><strong>Bank Name:</strong> PSBANK</p>
+          <p><strong>Account Name:</strong> Joshua Villarosa</p>
+          <p><strong>Account Number:</strong> 029110036801</p>
+        </div>
+
+        <button type="button" class="btn btn--accent btn--block">Proceed Payment</button>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>

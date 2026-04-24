@@ -3,7 +3,10 @@ const DASHBOARD_ENDPOINT = `${API_BASE}/api/AdminDashboard`;
 const REPORT_API = `${API_BASE}/api/Report`;
 
 let reservations = [];
-let refreshTimer = null;
+
+let revenueChart = null;
+let statusChart = null;
+let monthlyBookingsChart = null;
 
 const totalReservationsEl = document.getElementById("totalReservations");
 const pendingReservationsEl = document.getElementById("pendingReservations");
@@ -19,36 +22,55 @@ const availedHostEl = document.getElementById("availedHost");
 
 document.addEventListener("DOMContentLoaded", async () => {
   await loadAll();
-  startAutoRefresh();
+  setInterval(loadAll, 5000);
 });
 
 async function loadAll() {
   await Promise.all([
-    loadAnalytics(),
-    loadReports()
+    loadDashboardAnalytics(),
+    loadReportCards()
   ]);
 }
 
 async function fetchJson(url) {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return await res.json();
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      "Accept": "application/json"
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP Error: ${response.status}`);
+  }
+
+  return await response.json();
 }
 
-async function loadAnalytics() {
+async function loadDashboardAnalytics() {
   try {
     const data = await fetchJson(DASHBOARD_ENDPOINT);
-
     reservations = Array.isArray(data) ? data : [];
 
     const total = reservations.length;
-    const pending = reservations.filter(r => r.reservation_status === "Pending").length;
-    const approved = reservations.filter(r => r.reservation_status === "Approved").length;
-    const cancelled = reservations.filter(r => r.reservation_status === "Cancelled").length;
+
+    const pending = reservations.filter(r =>
+      getValue(r, "reservation_status", "reservationStatus") === "Pending"
+    ).length;
+
+    const approved = reservations.filter(r =>
+      getValue(r, "reservation_status", "reservationStatus") === "Approved"
+    ).length;
+
+    const cancelled = reservations.filter(r =>
+      getValue(r, "reservation_status", "reservationStatus") === "Cancelled"
+    ).length;
 
     const revenue = reservations
-      .filter(r => r.reservation_status === "Approved")
-      .reduce((sum, r) => sum + Number(r.total_amount || 0), 0);
+      .filter(r => getValue(r, "reservation_status", "reservationStatus") === "Approved")
+      .reduce((sum, r) => {
+        return sum + Number(getValue(r, "total_amount", "totalAmount") || 0);
+      }, 0);
 
     totalReservationsEl.textContent = total;
     pendingReservationsEl.textContent = pending;
@@ -56,12 +78,14 @@ async function loadAnalytics() {
     cancelledReservationsEl.textContent = cancelled;
     totalRevenueEl.textContent = formatCurrency(revenue);
 
-  } catch (err) {
-    console.error("Analytics error:", err);
+    renderCharts(reservations);
+
+  } catch (error) {
+    console.error("Dashboard analytics error:", error);
   }
 }
 
-async function loadReports() {
+async function loadReportCards() {
   try {
     const [
       totalRevenue,
@@ -75,28 +99,254 @@ async function loadReports() {
       fetchJson(`${REPORT_API}/host-availability`)
     ]);
 
-    totalRevenueEl.textContent = formatCurrency(totalRevenue.total_revenue);
-    totalExpenseEl.textContent = formatCurrency(totalExpense.total_expenses);
+    const totalRevenueValue =
+      getValue(totalRevenue, "total_revenue", "totalRevenue");
 
-    if (mostBooked.length > 0) {
-      mostBookedPackageEl.textContent = mostBooked[0].package_name;
-      mostBookedCountEl.textContent = `${mostBooked[0].reservation_count} bookings`;
+    const totalExpenseValue =
+      getValue(totalExpense, "total_expenses", "totalExpenses");
+
+    totalRevenueEl.textContent = formatCurrency(totalRevenueValue);
+
+    if (totalExpenseEl) {
+      totalExpenseEl.textContent = formatCurrency(totalExpenseValue);
     }
 
-    hostAvailableEl.textContent = hostAvailability.host_available;
-    availedHostEl.textContent = hostAvailability.availed_host;
+    if (Array.isArray(mostBooked) && mostBooked.length > 0) {
+      const packageName = getValue(mostBooked[0], "package_name", "packageName");
+      const reservationCount = getValue(mostBooked[0], "reservation_count", "reservationCount");
 
-  } catch (err) {
-    console.error("Reports error:", err);
+      if (mostBookedPackageEl) {
+        mostBookedPackageEl.textContent = packageName || "No package";
+      }
+
+      if (mostBookedCountEl) {
+        mostBookedCountEl.textContent = `${reservationCount || 0} bookings`;
+      }
+    }
+
+    if (hostAvailability) {
+      const available =
+        getValue(hostAvailability, "host_available", "hostAvailable");
+
+      const availed =
+        getValue(hostAvailability, "availed_host", "availedHost");
+
+      if (hostAvailableEl) {
+        hostAvailableEl.textContent = available || 0;
+      }
+
+      if (availedHostEl) {
+        availedHostEl.textContent = availed || 0;
+      }
+    }
+
+  } catch (error) {
+    console.error("Reports error:", error);
   }
 }
 
-function startAutoRefresh() {
-  setInterval(loadAll, 5000);
+function renderCharts(data) {
+  renderRevenueTrendChart(data);
+  renderReservationStatusChart(data);
+  renderMonthlyBookingsChart(data);
 }
 
-function formatCurrency(val) {
-  return `₱${Number(val || 0).toLocaleString("en-PH", {
+function renderRevenueTrendChart(data) {
+  const canvas = document.getElementById("revenueChart");
+  if (!canvas) return;
+
+  const monthlyRevenue = getMonthlyRevenue(data);
+
+  const labels = Object.keys(monthlyRevenue);
+  const values = Object.values(monthlyRevenue);
+
+  if (revenueChart) {
+    revenueChart.destroy();
+  }
+
+  revenueChart = new Chart(canvas, {
+    type: "line",
+    data: {
+      labels: labels,
+      datasets: [{
+        label: "Revenue",
+        data: values,
+        borderWidth: 3,
+        tension: 0.4,
+        fill: false
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          display: true
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true
+        }
+      }
+    }
+  });
+}
+
+function renderReservationStatusChart(data) {
+  const canvas = document.getElementById("statusChart");
+  if (!canvas) return;
+
+  const pending = data.filter(r =>
+    getValue(r, "reservation_status", "reservationStatus") === "Pending"
+  ).length;
+
+  const approved = data.filter(r =>
+    getValue(r, "reservation_status", "reservationStatus") === "Approved"
+  ).length;
+
+  const cancelled = data.filter(r =>
+    getValue(r, "reservation_status", "reservationStatus") === "Cancelled"
+  ).length;
+
+  if (statusChart) {
+    statusChart.destroy();
+  }
+
+  statusChart = new Chart(canvas, {
+    type: "doughnut",
+    data: {
+      labels: ["Pending", "Approved", "Cancelled"],
+      datasets: [{
+        data: [pending, approved, cancelled]
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: "top"
+        }
+      }
+    }
+  });
+}
+
+function renderMonthlyBookingsChart(data) {
+  const canvas = document.getElementById("monthlyBookingsChart");
+  if (!canvas) return;
+
+  const monthlyBookings = getMonthlyBookings(data);
+
+  const labels = Object.keys(monthlyBookings);
+  const values = Object.values(monthlyBookings);
+
+  if (monthlyBookingsChart) {
+    monthlyBookingsChart.destroy();
+  }
+
+  monthlyBookingsChart = new Chart(canvas, {
+    type: "bar",
+    data: {
+      labels: labels,
+      datasets: [{
+        label: "Bookings",
+        data: values
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          display: true
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            precision: 0
+          }
+        }
+      }
+    }
+  });
+}
+
+function getMonthlyRevenue(data) {
+  const months = getDefaultMonths();
+
+  data.forEach(item => {
+    const status = getValue(item, "reservation_status", "reservationStatus");
+    const dateValue = getValue(item, "event_date", "eventDate");
+    const amount = Number(getValue(item, "total_amount", "totalAmount") || 0);
+
+    if (status !== "Approved") return;
+    if (!dateValue) return;
+
+    const date = new Date(dateValue);
+    if (isNaN(date.getTime())) return;
+
+    const month = date.toLocaleString("en-PH", { month: "short" });
+
+    if (months[month] !== undefined) {
+      months[month] += amount;
+    }
+  });
+
+  return months;
+}
+
+function getMonthlyBookings(data) {
+  const months = getDefaultMonths();
+
+  data.forEach(item => {
+    const dateValue = getValue(item, "event_date", "eventDate");
+    if (!dateValue) return;
+
+    const date = new Date(dateValue);
+    if (isNaN(date.getTime())) return;
+
+    const month = date.toLocaleString("en-PH", { month: "short" });
+
+    if (months[month] !== undefined) {
+      months[month] += 1;
+    }
+  });
+
+  return months;
+}
+
+function getDefaultMonths() {
+  return {
+    Jan: 0,
+    Feb: 0,
+    Mar: 0,
+    Apr: 0,
+    May: 0,
+    Jun: 0,
+    Jul: 0,
+    Aug: 0,
+    Sep: 0,
+    Oct: 0,
+    Nov: 0,
+    Dec: 0
+  };
+}
+
+function getValue(item, snakeKey, camelKey) {
+  return item[snakeKey] ?? item[camelKey] ?? "";
+}
+
+function formatCurrency(value) {
+  const numberValue = Number(value);
+
+  if (isNaN(numberValue)) {
+    return "₱0.00";
+  }
+
+  return numberValue.toLocaleString("en-PH", {
+    style: "currency",
+    currency: "PHP",
     minimumFractionDigits: 2
-  })}`;
+  });
 }

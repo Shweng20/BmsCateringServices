@@ -40,6 +40,7 @@ body {
 
 .main-content {
   padding: 28px;
+  overflow-x: hidden;
 }
 
 .brand h1 {
@@ -148,6 +149,10 @@ body {
 .panel-header {
   padding: 20px 24px;
   border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 .panel-header h3 {
@@ -159,15 +164,6 @@ body {
   margin: 6px 0 0;
   color: var(--muted);
   font-size: 14px;
-}
-
-.panel-header {
-  padding: 20px 24px;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
 }
 
 .panel-actions {
@@ -184,8 +180,7 @@ body {
   font-size: 14px;
   outline: none;
   background: #fff;
-  min-width: 260px;
-  flex: 1;
+  min-width: 300px;
 }
 
 .panel-actions input:focus {
@@ -202,7 +197,7 @@ body {
 table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 900px;
+  min-width: 1050px;
   table-layout: fixed;
 }
 
@@ -217,6 +212,8 @@ td {
   border-bottom: 1px solid var(--border);
   font-size: 14px;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 th {
@@ -224,13 +221,20 @@ th {
   font-weight: 600;
 }
 
-th:nth-child(1) { width: 90px; }
-th:nth-child(2) { width: 250px; }
-th:nth-child(3) { width: 260px; }
-th:nth-child(4) { width: 180px; }
-th:nth-child(5) { width: 180px; text-align: center; }
+th:nth-child(1) { width: 140px; }
+th:nth-child(2) { width: 220px; }
+th:nth-child(3) { width: 180px; }
+th:nth-child(4) { width: 170px; }
+th:nth-child(5) { width: 240px; }
+th:nth-child(6) { width: 160px; text-align: right; }
+th:nth-child(7) { width: 150px; text-align: center; }
 
-td:nth-child(5) {
+td:nth-child(6) {
+  text-align: right;
+  font-weight: 600;
+}
+
+td:nth-child(7) {
   text-align: center;
 }
 
@@ -244,6 +248,16 @@ tbody tr:hover {
   padding: 40px 0;
 }
 
+.status-badge {
+  display: inline-block;
+  padding: 7px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  background: #e8f7f6;
+  color: var(--primary);
+}
+
 @media (max-width: 860px) {
   .dashboard {
     grid-template-columns: 1fr;
@@ -253,9 +267,18 @@ tbody tr:hover {
     display: none;
   }
 
+  .main-content {
+    padding: 18px;
+  }
+
   .topbar {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
+  }
+
+  .panel-actions input {
+    min-width: 100%;
+    width: 100%;
   }
 }
