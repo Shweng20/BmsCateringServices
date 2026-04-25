@@ -1,7 +1,8 @@
 const adminUser = getAdminUser();
 
-if (!adminUser) {
-  window.location.href = "adminLogin.html";
+if (!adminUser || Object.keys(adminUser).length === 0) {
+  localStorage.removeItem("adminUser");
+  window.location.href = "admin-login.html";
 }
 
 function getAdminUser() {
@@ -54,7 +55,7 @@ function setupLogout() {
     logoutBtn.addEventListener("click", () => {
       localStorage.removeItem("adminUser");
       localStorage.removeItem("adminToken");
-      window.location.href = "adminLogin.html";
+      window.location.href = "admin-login.html";
     });
   }
 }

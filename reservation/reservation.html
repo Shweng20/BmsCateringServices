@@ -312,8 +312,9 @@
                 id="minimum_pax"
                 name="minimum_pax"
                 class="form-control"
-                min="1"
-                placeholder="50"
+                min="40"
+                value="40"
+                readonly
                 required
               />
             </div>
@@ -342,7 +343,7 @@
               <strong id="additionalPaxText">0</strong>
             </div>
             <div class="summary-row">
-              <span>Extra pax charge (₱400/head)</span>
+              <span id="extraChargeLabel">Extra pax charge (₱400/head)</span>
               <strong id="extraChargeText">₱0.00</strong>
             </div>
             <div class="summary-row total-row">
@@ -350,6 +351,27 @@
               <strong id="totalAmountText">₱0.00</strong>
             </div>
           </div>
+
+          <div id="package3Options" class="package3-options hidden">
+  <h3>Package 3 Options</h3>
+  <p>Package 3 is for table setup and decoration only. No food selection included.</p>
+
+  <div class="option-box">
+    <label>Table Count</label>
+    <input type="text" id="table_count" class="form-control" readonly />
+    <small>1 table = 8 pax</small>
+  </div>
+
+  <div class="option-box">
+    <label for="decoration_option">Decoration Option</label>
+    <select id="decoration_option" class="form-control">
+      <option value="">Select decoration</option>
+      <option value="Basic Decoration">Basic Decoration</option>
+      <option value="Elegant Decoration">Elegant Decoration</option>
+      <option value="Premium Decoration">Premium Decoration</option>
+    </select>
+  </div>
+</div>
 
           <div class="form-group">
             <label for="client_request">Client Food Request</label>

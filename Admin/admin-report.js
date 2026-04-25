@@ -67,6 +67,8 @@ const REPORT_API = `${API_BASE}/api/Report`;
 
 const TRANSACTION_SUMMARY_URL = `${REPORT_API}/transaction-summary-report`;
 const TOTAL_REVENUE_PER_CLIENT_URL = `${REPORT_API}/total-revenue-per-client`;
+const TOTAL_SUCCESSFUL_TRANSACTION_AMOUNT_URL =
+  `${REPORT_API}/total-successful-transaction-amount`;
 
 const transactionTableBody = document.getElementById("transactionTableBody");
 const clientRevenueTableBody = document.getElementById("clientRevenueTableBody");
@@ -76,6 +78,8 @@ const clientRevenueSearch = document.getElementById("clientRevenueSearch");
 
 const totalTransactionsEl = document.getElementById("totalTransactions");
 const successfulTransactionsEl = document.getElementById("successfulTransactions");
+const totalSuccessfulPaymentAmountEl =
+  document.getElementById("totalSuccessfulPaymentAmount");
 const totalClientRevenueEl = document.getElementById("totalClientRevenue");
 const topClientEl = document.getElementById("topClient");
 
@@ -100,7 +104,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 async function loadReports() {
   await Promise.all([
     loadTransactionSummary(),
-    loadTotalRevenuePerClient()
+    loadTotalRevenuePerClient(),
+    loadTotalSuccessfulPaymentAmount()
   ]);
 
   updateCards();
@@ -129,11 +134,13 @@ async function loadTransactionSummary() {
   } catch (error) {
     console.error("Transaction summary error:", error);
 
-    transactionTableBody.innerHTML = `
-      <tr>
-        <td colspan="5" class="empty-state">Failed to load transactions.</td>
-      </tr>
-    `;
+    if (transactionTableBody) {
+      transactionTableBody.innerHTML = `
+        <tr>
+          <td colspan="5" class="empty-state">Failed to load transactions.</td>
+        </tr>
+      `;
+    }
   }
 }
 
@@ -152,15 +159,42 @@ async function loadTotalRevenuePerClient() {
   } catch (error) {
     console.error("Total revenue per client error:", error);
 
-    clientRevenueTableBody.innerHTML = `
-      <tr>
-        <td colspan="2" class="empty-state">Failed to load client revenue.</td>
-      </tr>
-    `;
+    if (clientRevenueTableBody) {
+      clientRevenueTableBody.innerHTML = `
+        <tr>
+          <td colspan="2" class="empty-state">Failed to load client revenue.</td>
+        </tr>
+      `;
+    }
+  }
+}
+
+async function loadTotalSuccessfulPaymentAmount() {
+  try {
+    const data = await fetchJson(TOTAL_SUCCESSFUL_TRANSACTION_AMOUNT_URL);
+
+    const amount =
+      data.total_successful_payments ??
+      data.totalSuccessfulPayments ??
+      data.TotalSuccessfulPayments ??
+      0;
+
+    if (totalSuccessfulPaymentAmountEl) {
+      totalSuccessfulPaymentAmountEl.textContent = formatCurrency(amount);
+    }
+
+  } catch (error) {
+    console.error("Total successful payment amount error:", error);
+
+    if (totalSuccessfulPaymentAmountEl) {
+      totalSuccessfulPaymentAmountEl.textContent = "₱0.00";
+    }
   }
 }
 
 function renderTransactionTable(data) {
+  if (!transactionTableBody) return;
+
   if (!data || data.length === 0) {
     transactionTableBody.innerHTML = `
       <tr>
@@ -194,6 +228,8 @@ function renderTransactionTable(data) {
 }
 
 function renderClientRevenueTable(data) {
+  if (!clientRevenueTableBody) return;
+
   if (!data || data.length === 0) {
     clientRevenueTableBody.innerHTML = `
       <tr>
@@ -217,6 +253,8 @@ function renderClientRevenueTable(data) {
 }
 
 function filterTransactions() {
+  if (!transactionSearch) return;
+
   const keyword = transactionSearch.value.toLowerCase().trim();
 
   const filtered = transactions.filter(item => {
@@ -237,6 +275,8 @@ function filterTransactions() {
 }
 
 function filterClientRevenue() {
+  if (!clientRevenueSearch) return;
+
   const keyword = clientRevenueSearch.value.toLowerCase().trim();
 
   const filtered = clientRevenue.filter(item => {
@@ -270,10 +310,21 @@ function updateCards() {
     ? getValue(clientRevenue[0], "full_name", "fullName")
     : "None";
 
-  totalTransactionsEl.textContent = totalTransactions;
-  successfulTransactionsEl.textContent = successfulTransactions;
-  totalClientRevenueEl.textContent = formatCurrency(totalRevenue);
-  topClientEl.textContent = topClient || "None";
+  if (totalTransactionsEl) {
+    totalTransactionsEl.textContent = totalTransactions;
+  }
+
+  if (successfulTransactionsEl) {
+    successfulTransactionsEl.textContent = successfulTransactions;
+  }
+
+  if (totalClientRevenueEl) {
+    totalClientRevenueEl.textContent = formatCurrency(totalRevenue);
+  }
+
+  if (topClientEl) {
+    topClientEl.textContent = topClient || "None";
+  }
 }
 
 function getValue(item, snakeKey, camelKey) {
@@ -283,7 +334,12 @@ function getValue(item, snakeKey, camelKey) {
 function getStatusClass(status) {
   const value = String(status).toLowerCase();
 
-  if (value.includes("success") || value.includes("paid") || value.includes("complete") || value.includes("approved")) {
+  if (
+    value.includes("success") ||
+    value.includes("paid") ||
+    value.includes("complete") ||
+    value.includes("approved")
+  ) {
     return "success";
   }
 
