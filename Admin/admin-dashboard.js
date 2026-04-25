@@ -1,3 +1,64 @@
+const adminUser = getAdminUser();
+
+if (!adminUser) {
+  window.location.href = "adminLogin.html";
+}
+
+function getAdminUser() {
+  const raw = localStorage.getItem("adminUser");
+
+  if (!raw) return null;
+
+  try {
+    return JSON.parse(raw);
+  } catch {
+    localStorage.removeItem("adminUser");
+    return null;
+  }
+}
+
+function setAdminProfile() {
+  const admin = getAdminUser();
+  if (!admin) return;
+
+  const fullName =
+    admin.full_name ||
+    admin.fullName ||
+    admin.name ||
+    admin.username ||
+    admin.Username ||
+    "Administrator";
+
+  const email =
+    admin.email ||
+    admin.Email ||
+    "BM's Catering";
+
+  document.querySelectorAll(".admin-info strong").forEach(el => {
+    el.textContent = fullName;
+  });
+
+  document.querySelectorAll(".admin-info span").forEach(el => {
+    el.textContent = email;
+  });
+
+  document.querySelectorAll(".avatar").forEach(el => {
+    el.textContent = fullName.charAt(0).toUpperCase();
+  });
+}
+
+function setupLogout() {
+  const logoutBtn = document.querySelector(".logout-btn");
+
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", () => {
+      localStorage.removeItem("adminUser");
+      localStorage.removeItem("adminToken");
+      window.location.href = "adminLogin.html";
+    });
+  }
+}
+
 const API_BASE = "https://localhost:7241";
 const DASHBOARD_ENDPOINT = `${API_BASE}/api/AdminDashboard`;
 const REPORT_API = `${API_BASE}/api/Report`;
@@ -21,6 +82,9 @@ const hostAvailableEl = document.getElementById("hostAvailable");
 const availedHostEl = document.getElementById("availedHost");
 
 document.addEventListener("DOMContentLoaded", async () => {
+  setAdminProfile();
+  setupLogout();
+
   await loadAll();
   setInterval(loadAll, 5000);
 });

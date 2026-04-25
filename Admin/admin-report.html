@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reports Dashboard | BM's Catering</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="admin-report.css" />
+</head>
+<body>
+
+<div class="dashboard">
+
+  <aside class="sidebar">
+    <div>
+      <div class="brand">
+        <h1>BM's Catering</h1>
+        <p>Admin Panel</p>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="admin-dashboard.html">Dashboard</a>
+        <a href="admin-reservation.html">Reservations</a>
+        <a href="client.html">Clients</a>
+        <a href="#" class="active">Reports</a>
+        <a href="#">Settings</a>
+      </nav>
+    </div>
+
+    <button class="logout-btn">Logout</button>
+  </aside>
+
+  <main class="main-content">
+
+    <header class="topbar">
+      <div>
+        <h2>Reports Dashboard</h2>
+        <p>View transaction summaries and client revenue performance.</p>
+      </div>
+
+      <div class="admin-chip">
+        <div class="avatar">A</div>
+        <div class="admin-info">
+          <strong>Administrator</strong>
+          <span>BM's Catering</span>
+        </div>
+      </div>
+    </header>
+
+    <section class="stats-grid">
+      <div class="stat-card">
+        <span>Total Transactions</span>
+        <h3 id="totalTransactions">0</h3>
+      </div>
+
+      <div class="stat-card">
+        <span>Successful Transactions</span>
+        <h3 id="successfulTransactions">0</h3>
+      </div>
+
+      <div class="stat-card revenue-card">
+        <span>Total Client Revenue</span>
+        <h3 id="totalClientRevenue">₱0.00</h3>
+      </div>
+
+      <div class="stat-card">
+        <span>Top Client</span>
+        <h3 id="topClient">None</h3>
+      </div>
+    </section>
+
+    <section class="reports-grid">
+
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Transaction Summary Report</h3>
+            <p>Review all customer transaction records.</p>
+          </div>
+
+          <input
+            type="text"
+            id="transactionSearch"
+            placeholder="Search transaction..."
+          />
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Person</th>
+                <th>Payment Method</th>
+                <th>Status</th>
+                <th>Payment Date</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+
+            <tbody id="transactionTableBody">
+              <tr>
+                <td colspan="5" class="empty-state">Loading transactions...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Total Revenue Per Client</h3>
+            <p>Client spending summary from reservations.</p>
+          </div>
+
+          <input
+            type="text"
+            id="clientRevenueSearch"
+            placeholder="Search client..."
+          />
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Full Name</th>
+                <th>Total Spent</th>
+              </tr>
+            </thead>
+
+            <tbody id="clientRevenueTableBody">
+              <tr>
+                <td colspan="2" class="empty-state">Loading client revenue...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+</div>
+
+<script src="admin-report.js"></script>
+</body>
+</html>

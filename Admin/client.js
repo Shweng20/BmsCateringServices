@@ -1,3 +1,66 @@
+const adminUser = getAdminUser();
+
+if (!adminUser) {
+  window.location.href = "admin-login.html";
+}
+
+function getAdminUser() {
+  const raw = localStorage.getItem("adminUser");
+
+  if (!raw) return null;
+
+  try {
+    return JSON.parse(raw);
+  } catch {
+    localStorage.removeItem("adminUser");
+    return null;
+  }
+}
+
+function setAdminProfile() {
+  const admin = getAdminUser();
+  if (!admin) return;
+
+  const fullName =
+    admin.full_name ||
+    admin.fullName ||
+    admin.name ||
+    admin.username ||
+    admin.Username ||
+    "Administrator";
+
+  const email =
+    admin.email ||
+    admin.Email ||
+    "BM's Catering";
+
+  document.querySelectorAll(".admin-info strong").forEach(el => {
+    el.textContent = fullName;
+  });
+
+  document.querySelectorAll(".admin-info span").forEach(el => {
+    el.textContent = email;
+  });
+
+  document.querySelectorAll(".avatar").forEach(el => {
+    el.textContent = fullName.charAt(0).toUpperCase();
+  });
+}
+
+function setupLogout() {
+  const logoutBtn =
+    document.querySelector(".logout-btn") ||
+    document.getElementById("logoutBtn");
+
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", () => {
+      localStorage.removeItem("adminUser");
+      localStorage.removeItem("adminToken");
+      window.location.href = "admin-login.html";
+    });
+  }
+}
+
 const API_URL = "https://localhost:7241/api/Report/user-reservation-dashboard";
 
 const tableBody = document.getElementById("clientTableBody");
@@ -6,23 +69,28 @@ const searchInput = document.getElementById("clientSearch");
 let clientData = [];
 
 document.addEventListener("DOMContentLoaded", () => {
+  setAdminProfile();
+  setupLogout();
+
   loadClientDashboard();
 
-  searchInput.addEventListener("input", () => {
-    const searchValue = searchInput.value.toLowerCase().trim();
+  if (searchInput) {
+    searchInput.addEventListener("input", () => {
+      const searchValue = searchInput.value.toLowerCase().trim();
 
-    const filteredData = clientData.filter(item => {
-      const fullName = getValue(item, "full_name", "fullName");
-      const email = getValue(item, "email", "email");
+      const filteredData = clientData.filter(item => {
+        const fullName = getValue(item, "full_name", "fullName");
+        const email = getValue(item, "email", "email");
 
-      return (
-        fullName.toLowerCase().includes(searchValue) ||
-        email.toLowerCase().includes(searchValue)
-      );
+        return (
+          fullName.toLowerCase().includes(searchValue) ||
+          email.toLowerCase().includes(searchValue)
+        );
+      });
+
+      renderTable(filteredData);
     });
-
-    renderTable(filteredData);
-  });
+  }
 });
 
 async function loadClientDashboard() {

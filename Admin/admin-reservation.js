@@ -1,10 +1,58 @@
+const adminUser = getAdminUser();
+
+if (!adminUser || Object.keys(adminUser).length === 0) {
+  localStorage.removeItem("adminUser");
+  window.location.href = "admin-login.html";
+}
+
+function getAdminUser() {
+  const raw = localStorage.getItem("adminUser");
+  if (!raw) return null;
+
+  try {
+    return JSON.parse(raw);
+  } catch {
+    localStorage.removeItem("adminUser");
+    return null;
+  }
+}
+
+function setAdminProfile() {
+  const admin = getAdminUser();
+  if (!admin) return;
+
+  const fullName =
+    admin.full_name ||
+    admin.fullName ||
+    admin.name ||
+    admin.username ||
+    admin.Username ||
+    "Administrator";
+
+  const email =
+    admin.email ||
+    admin.Email ||
+    "BM's Catering";
+
+  document.querySelectorAll(".admin-info strong").forEach(el => {
+    el.textContent = fullName;
+  });
+
+  document.querySelectorAll(".admin-info span").forEach(el => {
+    el.textContent = email;
+  });
+
+  document.querySelectorAll(".avatar").forEach(el => {
+    el.textContent = fullName.charAt(0).toUpperCase();
+  });
+}
+
 const API_BASE = "https://localhost:7241";
 const DASHBOARD_ENDPOINT = `${API_BASE}/api/AdminDashboard`;
 
 let reservations = [];
 let filteredReservations = [];
 let refreshTimer = null;
-let apiOnline = false;
 
 const totalReservationsEl = document.getElementById("totalReservations");
 const pendingReservationsEl = document.getElementById("pendingReservations");
@@ -19,9 +67,11 @@ const statusFilter = document.getElementById("statusFilter");
 const detailsModal = document.getElementById("detailsModal");
 const modalBody = document.getElementById("modalBody");
 const closeModalBtn = document.getElementById("closeModalBtn");
-const logoutBtn = document.getElementById("logoutBtn");
+const logoutBtn = document.getElementById("logoutBtn") || document.querySelector(".logout-btn");
 
 document.addEventListener("DOMContentLoaded", async () => {
+  setAdminProfile();
+  setupLogout();
   bindEvents();
   await initialLoad();
 });
@@ -32,6 +82,16 @@ async function initialLoad() {
   if (success) {
     startAutoRefresh();
   }
+}
+
+function setupLogout() {
+  if (!logoutBtn) return;
+
+  logoutBtn.addEventListener("click", () => {
+    localStorage.removeItem("adminUser");
+    localStorage.removeItem("adminToken");
+    window.location.href = "admin-login.html";
+  });
 }
 
 function bindEvents() {
@@ -48,26 +108,22 @@ function bindEvents() {
   }
 
   if (detailsModal) {
-    detailsModal.addEventListener("click", (event) => {
+    detailsModal.addEventListener("click", event => {
       if (event.target === detailsModal) {
         closeModal();
       }
     });
   }
 
-  document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && detailsModal && !detailsModal.classList.contains("hidden")) {
+  document.addEventListener("keydown", event => {
+    if (
+      event.key === "Escape" &&
+      detailsModal &&
+      !detailsModal.classList.contains("hidden")
+    ) {
       closeModal();
     }
   });
-
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", () => {
-      localStorage.removeItem("adminUser");
-      alert("Logged out successfully.");
-      window.location.href = "admin-login.html";
-    });
-  }
 }
 
 async function loadReservations(showLoading = true) {
@@ -79,13 +135,13 @@ async function loadReservations(showLoading = true) {
     const response = await fetch(DASHBOARD_ENDPOINT, {
       method: "GET",
       headers: {
-        "Content-Type": "application/json"
+        Accept: "application/json"
       }
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Failed to load dashboard data. Status: ${response.status}. ${errorText}`);
+      throw new Error(`HTTP ${response.status}: ${errorText}`);
     }
 
     const data = await response.json();
@@ -94,7 +150,6 @@ async function loadReservations(showLoading = true) {
       ? data.map(normalizeReservation)
       : [];
 
-    apiOnline = true;
     applyFilters();
     renderStats(reservations);
 
@@ -102,7 +157,6 @@ async function loadReservations(showLoading = true) {
   } catch (error) {
     console.error("loadReservations error:", error);
 
-    apiOnline = false;
     reservations = [];
     filteredReservations = [];
 
@@ -130,13 +184,15 @@ function stopAutoRefresh() {
 
 function normalizeReservation(item) {
   return {
-    reservation_id: item.reservation_id ?? 0,
-    full_name: item.full_name || "N/A",
-    event_type: item.event_type || "N/A",
-    event_date: item.event_date || "",
-    venue: item.venue || "N/A",
-    total_amount: Number(item.total_amount || 0),
-    reservation_status: normalizeStatus(item.reservation_status)
+    reservation_id: item.reservation_id ?? item.reservationId ?? 0,
+    full_name: item.full_name ?? item.fullName ?? "N/A",
+    event_type: item.event_type ?? item.eventType ?? "N/A",
+    event_date: item.event_date ?? item.eventDate ?? "",
+    venue: item.venue ?? "N/A",
+    total_amount: Number(item.total_amount ?? item.totalAmount ?? 0),
+    reservation_status: normalizeStatus(
+      item.reservation_status ?? item.reservationStatus
+    )
   };
 }
 
@@ -171,7 +227,7 @@ function applyFilters() {
   const searchValue = (searchInput?.value || "").trim().toLowerCase();
   const selectedStatus = statusFilter?.value || "all";
 
-  filteredReservations = reservations.filter((item) => {
+  filteredReservations = reservations.filter(item => {
     const matchesSearch =
       item.full_name.toLowerCase().includes(searchValue) ||
       item.event_type.toLowerCase().includes(searchValue) ||
@@ -190,7 +246,7 @@ function applyFilters() {
 function renderTable(data) {
   if (!reservationTableBody) return;
 
-  if (!data.length) {
+  if (!data || data.length === 0) {
     reservationTableBody.innerHTML = `
       <tr>
         <td colspan="8" class="empty-state">No reservations found.</td>
@@ -199,12 +255,12 @@ function renderTable(data) {
     return;
   }
 
-  reservationTableBody.innerHTML = data.map((item) => {
+  reservationTableBody.innerHTML = data.map(item => {
     const statusClass = item.reservation_status.toLowerCase();
 
     return `
       <tr>
-        <td>#${item.reservation_id}</td>
+        <td>#${escapeHtml(item.reservation_id)}</td>
         <td>${escapeHtml(item.full_name)}</td>
         <td>${escapeHtml(item.event_type)}</td>
         <td>${formatDate(item.event_date)}</td>
@@ -234,7 +290,7 @@ function bindTableActions() {
 
   const viewButtons = reservationTableBody.querySelectorAll(".btn-view");
 
-  viewButtons.forEach((button) => {
+  viewButtons.forEach(button => {
     button.addEventListener("click", () => {
       const id = Number(button.dataset.id);
       if (!id) return;
@@ -245,7 +301,7 @@ function bindTableActions() {
 }
 
 function viewDetails(id) {
-  const reservation = reservations.find((item) => item.reservation_id === id);
+  const reservation = reservations.find(item => item.reservation_id === id);
 
   if (!reservation) {
     alert("Reservation not found.");
@@ -258,7 +314,7 @@ function viewDetails(id) {
     <div class="detail-grid">
       <div class="detail-item">
         <span>Reservation ID</span>
-        <strong>#${reservation.reservation_id}</strong>
+        <strong>#${escapeHtml(reservation.reservation_id)}</strong>
       </div>
 
       <div class="detail-item">
@@ -333,7 +389,10 @@ function formatDate(dateString) {
   if (!dateString) return "N/A";
 
   const date = new Date(dateString);
-  if (isNaN(date.getTime())) return escapeHtml(String(dateString));
+
+  if (isNaN(date.getTime())) {
+    return escapeHtml(String(dateString));
+  }
 
   return date.toLocaleDateString("en-PH", {
     year: "numeric",
@@ -343,7 +402,7 @@ function formatDate(dateString) {
 }
 
 function escapeHtml(value) {
-  return String(value)
+  return String(value ?? "")
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
