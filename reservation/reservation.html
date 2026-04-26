@@ -13,6 +13,7 @@
   <link rel="icon" href="data:," />
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
 </head>
+
 <body class="section--tint">
   <header class="site-header">
     <div class="container nav-wrap">
@@ -77,6 +78,7 @@
             <button class="buffet-toggle" type="button">
               <span>Set A Buffet</span>
             </button>
+
             <div class="buffet-content">
               <div class="buffet-card">
                 <div class="buffet-section">
@@ -114,6 +116,7 @@
             <button class="buffet-toggle" type="button">
               <span>Set B Buffet</span>
             </button>
+
             <div class="buffet-content">
               <div class="buffet-card">
                 <div class="buffet-section">
@@ -151,6 +154,7 @@
             <button class="buffet-toggle" type="button">
               <span>Set C Buffet</span>
             </button>
+
             <div class="buffet-content">
               <div class="buffet-card">
                 <div class="buffet-section">
@@ -188,6 +192,7 @@
             <button class="buffet-toggle" type="button">
               <span>Set D Buffet</span>
             </button>
+
             <div class="buffet-content">
               <div class="buffet-card">
                 <div class="buffet-section">
@@ -219,6 +224,27 @@
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+
+        <div class="buffet-addons">
+          <h3>Additional Options</h3>
+          <small class="selection-comment">
+            Optional add-ons. Host and sound system options are loaded from the system.
+          </small>
+
+          <div class="form-group">
+            <label for="host_option">Host Option</label>
+            <select id="host_option" name="host_option" class="form-control">
+              <option value="">No host selected</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="sound_light_option">Sound System Option</label>
+            <select id="sound_light_option" name="sound_light_option" class="form-control">
+              <option value="">No sound system selected</option>
+            </select>
           </div>
         </div>
       </div>
@@ -260,7 +286,13 @@
 
             <div class="form-group">
               <label for="event_time">Event Time</label>
-              <input type="time" id="event_time" name="event_time" class="form-control" required />
+              <input
+                type="time"
+                id="event_time"
+                name="event_time"
+                class="form-control"
+                required
+              />
             </div>
           </div>
 
@@ -338,14 +370,17 @@
               <span>Base package price</span>
               <strong id="basePriceText">₱0.00</strong>
             </div>
+
             <div class="summary-row">
               <span>Additional pax</span>
               <strong id="additionalPaxText">0</strong>
             </div>
+
             <div class="summary-row">
               <span id="extraChargeLabel">Extra pax charge (₱400/head)</span>
               <strong id="extraChargeText">₱0.00</strong>
             </div>
+
             <div class="summary-row total-row">
               <span>Total reservation amount</span>
               <strong id="totalAmountText">₱0.00</strong>
@@ -353,25 +388,48 @@
           </div>
 
           <div id="package3Options" class="package3-options hidden">
-  <h3>Package 3 Options</h3>
-  <p>Package 3 is for table setup and decoration only. No food selection included.</p>
+            <h3>Package 3 Options</h3>
+            <p>Package 3 is for table setup and decoration only. No food selection included.</p>
 
-  <div class="option-box">
-    <label>Table Count</label>
-    <input type="text" id="table_count" class="form-control" readonly />
-    <small>1 table = 8 pax</small>
-  </div>
+            <div class="option-box">
+              <label>Table Count</label>
+              <input type="text" id="table_count" class="form-control" readonly />
+              <small>1 table = 8 pax</small>
+            </div>
 
-  <div class="option-box">
-    <label for="decoration_option">Decoration Option</label>
-    <select id="decoration_option" class="form-control">
-      <option value="">Select decoration</option>
-      <option value="Basic Decoration">Basic Decoration</option>
-      <option value="Elegant Decoration">Elegant Decoration</option>
-      <option value="Premium Decoration">Premium Decoration</option>
-    </select>
-  </div>
-</div>
+            <div class="option-box">
+              <label for="decoration_option">Decoration Option</label>
+              <select id="decoration_option" class="form-control">
+                <option value="">Select decoration</option>
+                <option value="Basic Decoration">Basic Decoration</option>
+                <option value="Elegant Decoration">Elegant Decoration</option>
+                <option value="Premium Decoration">Premium Decoration</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="menu_choice">Menu Choice</label>
+            <select id="menu_choice" name="menu_choice" class="form-control" required>
+              <option value="">Select menu option</option>
+              <option value="Buffet A">Set A Buffet</option>
+              <option value="Buffet B">Set B Buffet</option>
+              <option value="Buffet C">Set C Buffet</option>
+              <option value="Buffet D">Set D Buffet</option>
+              <option value="Customize">Customize Menu</option>
+            </select>
+          </div>
+
+          <div id="selectedSetPreview" class="selection-box hidden">
+            <div class="selection-box__head">
+              <h3>Selected Buffet Set</h3>
+              <span id="selectedSetBadge">No set selected</span>
+            </div>
+
+            <div id="selectedSetList" class="selected-food-list empty-state">
+              Please choose Set A, B, C, D, or Customize.
+            </div>
+          </div>
 
           <div class="form-group">
             <label for="client_request">Client Food Request</label>
@@ -379,17 +437,40 @@
               id="client_request"
               name="client_request"
               class="form-control textarea-control"
-              placeholder="Example: more chicken dishes, seafood, pasta, less spicy, no pork..."
+              placeholder="Example: more chicken dishes, less spicy, no pork..."
             ></textarea>
           </div>
 
           <div class="filter-row">
-            <label class="check-chip"><input type="checkbox" name="diet" value="chicken" /> Chicken</label>
-            <label class="check-chip"><input type="checkbox" name="diet" value="beef" /> Beef</label>
-            <label class="check-chip"><input type="checkbox" name="diet" value="seafood" /> Seafood</label>
-            <label class="check-chip"><input type="checkbox" name="diet" value="vegetable" /> Vegetable</label>
-            <label class="check-chip"><input type="checkbox" name="diet" value="pasta" /> Pasta</label>
-            <label class="check-chip"><input type="checkbox" name="diet" value="dessert" /> Dessert</label>
+            <label class="check-chip">
+              <input type="checkbox" name="diet" value="chicken" />
+              Chicken
+            </label>
+
+            <label class="check-chip">
+              <input type="checkbox" name="diet" value="pork" />
+              Pork
+            </label>
+
+            <label class="check-chip">
+              <input type="checkbox" name="diet" value="Fish" />
+              Fish
+            </label>
+
+            <label class="check-chip">
+              <input type="checkbox" name="diet" value="vegetable" />
+              Vegetable
+            </label>
+
+            <label class="check-chip">
+              <input type="checkbox" name="diet" value="dessert" />
+              Dessert
+            </label>
+
+            <label class="check-chip hidden" id="pastaChoiceChip">
+              <input type="checkbox" name="diet" value="pasta" id="dietPasta" />
+              Pasta
+            </label>
           </div>
 
           <div class="menu-section">
@@ -398,6 +479,7 @@
                 <h3>Dynamic Food Selection</h3>
                 <p>Recommended food updates based on the client request, event type, and selected tags.</p>
               </div>
+
               <input
                 type="text"
                 id="menuSearch"
@@ -406,21 +488,33 @@
               />
             </div>
 
-            <div id="menuEmptyState" class="empty-state hidden">No matching food items found.</div>
+            <div id="menuEmptyState" class="empty-state hidden">
+              No matching food items found.
+            </div>
+
             <div id="menuList" class="menu-list"></div>
           </div>
 
           <div class="selection-box">
             <div class="selection-box__head">
-              <h3>Selected Food</h3>
+              <div>
+                <h3>Selected Food</h3>
+                <small class="selection-comment">
+                  Package 1: rice and drinks are included. Package 2: rice, drinks, and dessert are included.
+                </small>
+              </div>
+
               <span id="selectedCountBadge">0 item(s)</span>
             </div>
+
             <div id="selectedFoodList" class="selected-food-list empty-state">
               No food selected yet.
             </div>
           </div>
 
-          <button type="submit" class="btn btn--accent btn--block">Confirm Reservation</button>
+          <button type="submit" class="btn btn--accent btn--block">
+            Confirm Reservation
+          </button>
         </form>
       </div>
     </div>
@@ -429,11 +523,12 @@
   <div class="toast-container" id="toastContainer"></div>
 
   <script src="reservation.js"></script>
+
   <script>
-    document.querySelectorAll('.buffet-toggle').forEach((button) => {
-      button.addEventListener('click', () => {
+    document.querySelectorAll(".buffet-toggle").forEach((button) => {
+      button.addEventListener("click", () => {
         const parent = button.parentElement;
-        parent.classList.toggle('active');
+        parent.classList.toggle("active");
       });
     });
   </script>

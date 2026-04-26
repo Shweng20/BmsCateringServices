@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment | BM'S Catering Services</title>
   <link rel="stylesheet" href="payment.css" />
+  <link rel="icon" href="data:,">
 </head>
 
 <body>
@@ -12,10 +14,10 @@
     <div class="payment-box">
 
       <div class="payment-left">
-       <div class="qr-box">
-  <img src="../QRCODE.png" alt="InstaPay QR Code" class="qr-image">
-  <p>Scan to Pay</p>
-</div>
+        <div class="qr-box">
+          <img src="../QRCODE.png" alt="InstaPay QR Code" class="qr-image">
+          <p>Scan to Pay</p>
+        </div>
 
         <div class="proof-box">
           <label for="proofPayment">Proof of Payment</label>
@@ -28,6 +30,8 @@
             accept="image/*"
             required
           >
+
+          <div id="proofPreview"></div>
         </div>
       </div>
 
@@ -39,6 +43,41 @@
 
         <div class="payment-summary">
           <div>
+            <span>Reservation ID</span>
+            <strong id="reservationIdText">—</strong>
+          </div>
+
+          <div>
+            <span>Client Name</span>
+            <strong id="clientNameText">—</strong>
+          </div>
+
+          <div>
+            <span>Event Type</span>
+            <strong id="eventTypeText">—</strong>
+          </div>
+
+          <div>
+            <span>Event Date</span>
+            <strong id="eventDateText">—</strong>
+          </div>
+
+          <div>
+            <span>Event Time</span>
+            <strong id="eventTimeText">—</strong>
+          </div>
+
+          <div>
+            <span>Venue</span>
+            <strong id="venueText">—</strong>
+          </div>
+
+          <div>
+            <span>Package</span>
+            <strong id="packageNameText">—</strong>
+          </div>
+
+          <div>
             <span>Total Amount</span>
             <strong id="paymentTotal">₱0.00</strong>
           </div>
@@ -49,38 +88,44 @@
           </div>
         </div>
 
-        <div class="payment-methods">
-          <label>
-            <input type="radio" name="payment_method" value="cash" checked>
-            Cash Payment
-          </label>
+        <form id="paymentForm">
+          <div class="payment-methods">
+            <label>
+              <input type="radio" name="payment_method" value="Cash" checked>
+              Cash Payment
+            </label>
 
-          <label>
-            <input type="radio" name="payment_method" value="gcash">
-            GCash
-          </label>
+            <label>
+              <input type="radio" name="payment_method" value="GCash">
+              GCash
+            </label>
 
-          <label>
-            <input type="radio" name="payment_method" value="bank">
-            Bank Transfer
-          </label>
-        </div>
+            <label>
+              <input type="radio" name="payment_method" value="Bank Transfer">
+              Bank Transfer
+            </label>
+          </div>
 
-        <div class="gcash-box">
-          <p><strong>GCash Name:</strong> JO***A V.</p>
-          <p><strong>GCash Number:</strong> 0921420****</p>
-        </div>
+          <div class="gcash-box" id="gcashBox">
+            <p><strong>GCash Name:</strong> JO***A V.</p>
+            <p><strong>GCash Number:</strong> 0921420****</p>
+          </div>
 
-        <div class="bank-box">
-          <p><strong>Bank Name:</strong> PSBANK</p>
-          <p><strong>Account Name:</strong> Joshua Villarosa</p>
-          <p><strong>Account Number:</strong> 029110036801</p>
-        </div>
+          <div class="bank-box" id="bankBox">
+            <p><strong>Bank Name:</strong> PSBANK</p>
+            <p><strong>Account Name:</strong> Joshua Villarosa</p>
+            <p><strong>Account Number:</strong> 029110036801</p>
+          </div>
 
-        <button type="button" class="btn btn--accent btn--block">Proceed Payment</button>
+          <p id="paymentMessage" class="payment-message"></p>
+
+          <button type="submit" class="btn btn--accent btn--block">Proceed Payment</button>
+        </form>
       </div>
 
     </div>
   </div>
+
+  <script src="payment.js"></script>
 </body>
 </html>

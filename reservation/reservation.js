@@ -3,6 +3,9 @@ document.addEventListener("DOMContentLoaded", function () {
   const RESERVATION_API = `${API_BASE}/Reservation`;
   const MENU_API = `${API_BASE}/Menu`;
   const DECORATION_API = `${API_BASE}/Decoration`;
+  const HOST_API = `${API_BASE}/Host`;
+  const SOUND_LIGHT_API = `${API_BASE}/SoundLight`;
+
   const EXTRA_PAX_RATE = 400;
   const PACKAGE3_TABLE_RATE_PER_PAX = 200;
 
@@ -20,10 +23,21 @@ document.addEventListener("DOMContentLoaded", function () {
   const menuSearchInput = document.getElementById("menuSearch");
   const eventTypeInput = document.getElementById("event_type");
 
+  const pastaChoiceChip = document.getElementById("pastaChoiceChip");
+  const dietPastaInput = document.getElementById("dietPasta");
+
   const menuList = document.getElementById("menuList");
   const menuEmptyState = document.getElementById("menuEmptyState");
   const selectedFoodList = document.getElementById("selectedFoodList");
   const selectedCountBadge = document.getElementById("selectedCountBadge");
+
+  const menuChoiceInput = document.getElementById("menu_choice");
+  const selectedSetPreview = document.getElementById("selectedSetPreview");
+  const selectedSetBadge = document.getElementById("selectedSetBadge");
+  const selectedSetList = document.getElementById("selectedSetList");
+
+  const hostOptionInput = document.getElementById("host_option");
+  const soundLightOptionInput = document.getElementById("sound_light_option");
 
   const basePriceText = document.getElementById("basePriceText");
   const additionalPaxText = document.getElementById("additionalPaxText");
@@ -94,6 +108,132 @@ document.addEventListener("DOMContentLoaded", function () {
     return packageNameInput.value.trim().toLowerCase().includes("package 3");
   }
 
+  function isPackage1() {
+    return packageNameInput.value.trim().toLowerCase().includes("package 1");
+  }
+
+  function isPackage2() {
+    return packageNameInput.value.trim().toLowerCase().includes("package 2");
+  }
+
+  function updatePastaChoiceVisibility() {
+    if (!pastaChoiceChip) return;
+
+    if (isPackage2() && !isPackage3()) {
+      pastaChoiceChip.classList.remove("hidden");
+    } else {
+      pastaChoiceChip.classList.add("hidden");
+
+      if (dietPastaInput) {
+        dietPastaInput.checked = false;
+      }
+    }
+  }
+
+  function isRiceOrDrink(item) {
+    const foodName = String(item.food_name || "").toLowerCase();
+    const category = String(item.category || "").toLowerCase();
+    const description = String(item.description || "").toLowerCase();
+
+    return (
+      category.includes("rice") ||
+      category.includes("drink") ||
+      category.includes("beverage") ||
+      description.includes("rice") ||
+      description.includes("drink") ||
+      description.includes("beverage") ||
+      foodName.includes("rice") ||
+      foodName.includes("pandan rice") ||
+      foodName.includes("normal rice") ||
+      foodName.includes("drink") ||
+      foodName.includes("juice") ||
+      foodName.includes("iced tea") ||
+      foodName.includes("softdrink") ||
+      foodName.includes("soft drink") ||
+      foodName.includes("beverage")
+    );
+  }
+
+  function isDessert(item) {
+    const foodName = String(item.food_name || "").toLowerCase();
+    const category = String(item.category || "").toLowerCase();
+    const description = String(item.description || "").toLowerCase();
+
+    return (
+      category.includes("dessert") ||
+      description.includes("dessert") ||
+      foodName.includes("dessert") ||
+      foodName.includes("cake") ||
+      foodName.includes("salad") ||
+      foodName.includes("crepe") ||
+      foodName.includes("leche flan") ||
+      foodName.includes("buko pandan") ||
+      foodName.includes("jell-o") ||
+      foodName.includes("jello") ||
+      foodName.includes("mango") ||
+      foodName.includes("fruit salad") ||
+      foodName.includes("macapuno")
+    );
+  }
+
+  function isPasta(item) {
+    const foodName = String(item.food_name || "").toLowerCase();
+    const category = String(item.category || "").toLowerCase();
+    const description = String(item.description || "").toLowerCase();
+
+    return (
+      category.includes("pasta") ||
+      description.includes("pasta") ||
+      foodName.includes("pasta") ||
+      foodName.includes("spaghetti") ||
+      foodName.includes("carbonara") ||
+      foodName.includes("macaroni") ||
+      foodName.includes("lasagna") ||
+      foodName.includes("fettuccine")
+    );
+  }
+
+  function getSelectedFoodMenus() {
+    return [...selectedMenus.values()].filter(item => {
+      if (isRiceOrDrink(item)) return false;
+
+      if (isPackage1()) {
+        return !isDessert(item);
+      }
+
+      if (isPackage2()) {
+        return !isDessert(item) && !isPasta(item);
+      }
+
+      return true;
+    });
+  }
+
+  function getSelectedDesserts() {
+    return [...selectedMenus.values()].filter(item => isDessert(item));
+  }
+
+  function getSelectedPastas() {
+    return [...selectedMenus.values()].filter(item => isPasta(item));
+  }
+
+  function getPackageFoodLimit() {
+    if (isPackage1()) return 4;
+    if (isPackage2()) return 5;
+    return null;
+  }
+
+  function getPackageDessertLimit() {
+    if (isPackage1()) return 1;
+    if (isPackage2()) return 1;
+    return null;
+  }
+
+  function getPackagePastaLimit() {
+    if (isPackage2()) return 1;
+    return null;
+  }
+
   function getCheckedTags() {
     return [...document.querySelectorAll('input[name="diet"]:checked')]
       .map(x => x.value.trim().toLowerCase());
@@ -113,6 +253,135 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!decorationSelect) return "";
 
     return decorationSelect.options[decorationSelect.selectedIndex]?.dataset.name || "";
+  }
+
+  function getSelectedHostPrice() {
+    if (!hostOptionInput || !hostOptionInput.value) return 0;
+
+    return Number(
+      hostOptionInput.options[hostOptionInput.selectedIndex]?.dataset.price || 0
+    );
+  }
+
+  function getSelectedHostName() {
+    if (!hostOptionInput || !hostOptionInput.value) return "";
+
+    return hostOptionInput.options[hostOptionInput.selectedIndex]?.dataset.name || "";
+  }
+
+  function getSelectedSoundLightPrice() {
+    if (!soundLightOptionInput || !soundLightOptionInput.value) return 0;
+
+    return Number(
+      soundLightOptionInput.options[soundLightOptionInput.selectedIndex]?.dataset.price || 0
+    );
+  }
+
+  function getSelectedSoundLightName() {
+    if (!soundLightOptionInput || !soundLightOptionInput.value) return "";
+
+    return soundLightOptionInput.options[soundLightOptionInput.selectedIndex]?.dataset.name || "";
+  }
+
+  function getMenusByBuffetSet(setCategory) {
+    return menuCatalog
+      .filter(item =>
+        String(item.category || "").trim().toLowerCase() ===
+        String(setCategory || "").trim().toLowerCase()
+      )
+      .map(item => ({
+        menu_id: item.menu_id,
+        food_name: item.food_name,
+        category: item.category,
+        description: item.description,
+        quantity: 1
+      }));
+  }
+
+  function handleMenuChoice() {
+    if (!menuChoiceInput) return;
+
+    const choice = menuChoiceInput.value;
+
+    const menuSection = document.querySelector(".menu-section");
+    const selectionBox = document.querySelector(".selection-box:not(#selectedSetPreview)");
+    const filterRow = document.querySelector(".filter-row");
+    const clientRequestGroup = clientRequestInput?.closest(".form-group");
+
+    selectedMenus.clear();
+
+    if (isPackage3()) {
+      if (selectedSetPreview) selectedSetPreview.classList.add("hidden");
+      if (menuSection) menuSection.classList.add("hidden");
+      if (selectionBox) selectionBox.classList.add("hidden");
+      if (filterRow) filterRow.classList.add("hidden");
+      if (clientRequestGroup) clientRequestGroup.classList.add("hidden");
+
+      renderSelectedFood();
+      return;
+    }
+
+    if (choice === "Customize") {
+      if (selectedSetPreview) selectedSetPreview.classList.add("hidden");
+
+      if (menuSection) menuSection.classList.remove("hidden");
+      if (selectionBox) selectionBox.classList.remove("hidden");
+      if (filterRow) filterRow.classList.remove("hidden");
+      if (clientRequestGroup) clientRequestGroup.classList.remove("hidden");
+
+      updatePastaChoiceVisibility();
+      renderMenu();
+      renderSelectedFood();
+      return;
+    }
+
+    if (["Buffet A", "Buffet B", "Buffet C", "Buffet D"].includes(choice)) {
+      const setMenus = getMenusByBuffetSet(choice);
+
+      if (menuSection) menuSection.classList.add("hidden");
+      if (selectionBox) selectionBox.classList.add("hidden");
+      if (filterRow) filterRow.classList.add("hidden");
+      if (clientRequestGroup) clientRequestGroup.classList.add("hidden");
+
+      if (selectedSetPreview) selectedSetPreview.classList.remove("hidden");
+      if (selectedSetBadge) selectedSetBadge.textContent = choice.replace("Buffet", "Set");
+
+      if (selectedSetList) {
+        if (setMenus.length === 0) {
+          selectedSetList.className = "selected-food-list empty-state";
+          selectedSetList.textContent = `No menu found for ${choice}. Check Menu.category in database.`;
+        } else {
+          selectedSetList.className = "selected-food-list";
+          selectedSetList.innerHTML = setMenus.map(item => `
+            <div class="selected-food-item">
+              <div>
+                <strong>${escapeHtml(item.food_name)}</strong>
+                <span>${escapeHtml(item.category)}</span>
+              </div>
+              <span class="count-badge">Included</span>
+            </div>
+          `).join("");
+        }
+      }
+
+      renderSelectedFood();
+      return;
+    }
+
+    if (selectedSetPreview) selectedSetPreview.classList.remove("hidden");
+    if (selectedSetBadge) selectedSetBadge.textContent = "No set selected";
+
+    if (selectedSetList) {
+      selectedSetList.className = "selected-food-list empty-state";
+      selectedSetList.textContent = "Please choose Set A, B, C, D, or Customize.";
+    }
+
+    if (menuSection) menuSection.classList.add("hidden");
+    if (selectionBox) selectionBox.classList.add("hidden");
+    if (filterRow) filterRow.classList.add("hidden");
+    if (clientRequestGroup) clientRequestGroup.classList.add("hidden");
+
+    renderSelectedFood();
   }
 
   function applyPackagePrice() {
@@ -162,10 +431,12 @@ document.addEventListener("DOMContentLoaded", function () {
       minimumPaxInput.readOnly = true;
 
       computePricing();
+      updatePastaChoiceVisibility();
     } catch (error) {
       console.error("Invalid selectedPackage:", error);
       localStorage.removeItem("selectedPackage");
       computePricing();
+      updatePastaChoiceVisibility();
     }
   }
 
@@ -184,90 +455,81 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function handlePackageUI() {
     const package3Options = document.getElementById("package3Options");
-    const menuSection = document.querySelector(".menu-section");
-    const selectionBox = document.querySelector(".selection-box");
-    const filterRow = document.querySelector(".filter-row");
-    const clientRequestGroup = clientRequestInput?.closest(".form-group");
 
     if (!package3Options) return;
 
     if (isPackage3()) {
       package3Options.classList.remove("hidden");
-
-      if (menuSection) menuSection.classList.add("hidden");
-      if (selectionBox) selectionBox.classList.add("hidden");
-      if (filterRow) filterRow.classList.add("hidden");
-      if (clientRequestGroup) clientRequestGroup.classList.add("hidden");
-
-      selectedMenus.clear();
-      renderSelectedFood();
     } else {
       package3Options.classList.add("hidden");
-
-      if (menuSection) menuSection.classList.remove("hidden");
-      if (selectionBox) selectionBox.classList.remove("hidden");
-      if (filterRow) filterRow.classList.remove("hidden");
-      if (clientRequestGroup) clientRequestGroup.classList.remove("hidden");
     }
 
+    updatePastaChoiceVisibility();
     updateTableCount();
+    handleMenuChoice();
   }
 
   function computePricing() {
-  const basePrice = Number(packagePriceInput.value || 0);
-  const minimumPax = Number(minimumPaxInput.value || 40);
-  const expectedPax = Number(expectedPaxInput.value || 0);
-  const additionalPax = Math.max(expectedPax - minimumPax, 0);
+    const basePrice = Number(packagePriceInput.value || 0);
+    const minimumPax = Number(minimumPaxInput.value || 40);
+    const expectedPax = Number(expectedPaxInput.value || 0);
+    const additionalPax = Math.max(expectedPax - minimumPax, 0);
 
-  let extraCharge = 0;
-  let totalAmount = basePrice;
-  let tableReservationAmount = 0;
-  let decorationPrice = 0;
+    let extraCharge = 0;
+    let totalAmount = basePrice;
+    let tableReservationAmount = 0;
+    let decorationPrice = 0;
 
-  if (isPackage3()) {
-    if (extraChargeLabel) {
-      extraChargeLabel.textContent = "Table reservation charge (₱200/head)";
+    const hostPrice = getSelectedHostPrice();
+    const soundLightPrice = getSelectedSoundLightPrice();
+
+    if (isPackage3()) {
+      if (extraChargeLabel) {
+        extraChargeLabel.textContent = "Table reservation charge (₱200/head)";
+      }
+
+      const paxForTable = expectedPax > 0 ? expectedPax : 40;
+      const tableCount = Math.ceil(paxForTable / 8);
+
+      tableReservationAmount = paxForTable * PACKAGE3_TABLE_RATE_PER_PAX;
+      decorationPrice = getSelectedDecorationPrice();
+      totalAmount = tableReservationAmount + decorationPrice + hostPrice + soundLightPrice;
+
+      basePriceText.textContent = `${paxForTable} pax × ${formatCurrency(PACKAGE3_TABLE_RATE_PER_PAX)}`;
+      additionalPaxText.textContent = `${tableCount} table(s)`;
+      extraChargeText.textContent =
+        `Table: ${formatCurrency(tableReservationAmount)} + Decoration: ${formatCurrency(decorationPrice)} + Host: ${formatCurrency(hostPrice)} + Sound: ${formatCurrency(soundLightPrice)}`;
+    } else {
+      if (extraChargeLabel) {
+        extraChargeLabel.textContent = "Extra pax charge + add-ons";
+      }
+
+      extraCharge = additionalPax * EXTRA_PAX_RATE;
+      totalAmount = basePrice + extraCharge + hostPrice + soundLightPrice;
+
+      basePriceText.textContent = formatCurrency(basePrice);
+      additionalPaxText.textContent = additionalPax;
+      extraChargeText.textContent =
+        `Extra Pax: ${formatCurrency(extraCharge)} + Host: ${formatCurrency(hostPrice)} + Sound: ${formatCurrency(soundLightPrice)}`;
     }
 
-    const paxForTable = expectedPax > 0 ? expectedPax : 40;
-    const tableCount = Math.ceil(paxForTable / 8);
+    totalAmountText.textContent = formatCurrency(totalAmount);
+    handlePackageUI();
 
-    tableReservationAmount = paxForTable * PACKAGE3_TABLE_RATE_PER_PAX;
-    decorationPrice = getSelectedDecorationPrice();
-    totalAmount = tableReservationAmount + decorationPrice;
-
-    basePriceText.textContent = `${paxForTable} pax × ${formatCurrency(PACKAGE3_TABLE_RATE_PER_PAX)}`;
-    additionalPaxText.textContent = `${tableCount} table(s)`;
-    extraChargeText.textContent =
-      `Table: ${formatCurrency(tableReservationAmount)} + Decoration: ${formatCurrency(decorationPrice)}`;
-  } else {
-    if (extraChargeLabel) {
-      extraChargeLabel.textContent = "Extra pax charge (₱400/head)";
-    }
-
-    extraCharge = additionalPax * EXTRA_PAX_RATE;
-    totalAmount = basePrice + extraCharge;
-
-    basePriceText.textContent = formatCurrency(basePrice);
-    additionalPaxText.textContent = additionalPax;
-    extraChargeText.textContent = formatCurrency(extraCharge);
+    return {
+      basePrice,
+      minimumPax,
+      expectedPax,
+      additionalPax,
+      tableCount: isPackage3() ? Math.ceil((expectedPax || 40) / 8) : null,
+      tableReservationAmount,
+      decorationPrice,
+      hostPrice,
+      soundLightPrice,
+      extraCharge,
+      totalAmount
+    };
   }
-
-  totalAmountText.textContent = formatCurrency(totalAmount);
-  handlePackageUI();
-
-  return {
-    basePrice,
-    minimumPax,
-    expectedPax,
-    additionalPax,
-    tableCount: isPackage3() ? Math.ceil((expectedPax || 40) / 8) : null,
-    tableReservationAmount,
-    decorationPrice,
-    extraCharge,
-    totalAmount
-  };
-}
 
   const clientData = localStorage.getItem("clientUser");
 
@@ -290,6 +552,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   if (!clientId) {
     localStorage.removeItem("clientUser");
+    localStorage.removeItem("clientToken");
     redirectWithToast("Client session is missing. Please login again.", "error", "../UserLogin/login.html");
     return;
   }
@@ -385,6 +648,171 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
+  async function fetchHosts() {
+    if (!hostOptionInput) return;
+
+    hostOptionInput.innerHTML = `<option value="">Loading hosts...</option>`;
+
+    try {
+      const response = await fetch(HOST_API, {
+        method: "GET",
+        headers: {
+          Accept: "application/json"
+        }
+      });
+
+      const raw = await response.text();
+      const data = raw ? JSON.parse(raw) : [];
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const hosts = (Array.isArray(data) ? data : []).filter(item => {
+        const isDeleted = item.is_deleted ?? item.isDeleted ?? false;
+        const status = String(item.availability_status ?? item.availabilityStatus ?? "").toLowerCase();
+
+        return !isDeleted && status !== "unavailable";
+      });
+
+      hostOptionInput.innerHTML = `<option value="">No host selected</option>`;
+
+      hosts.forEach(item => {
+        const hostId = item.host_id ?? item.hostId;
+
+        const hostName =
+          item.host_name ??
+          item.hostName ??
+          item.full_name ??
+          item.fullName ??
+          item.name ??
+          "Host";
+
+        const specialization =
+          item.specialization ??
+          item.host_specialization ??
+          item.hostSpecialization ??
+          item.host_type ??
+          item.hostType ??
+          item.specialty ??
+          "";
+
+        const price = Number(
+          item.professional_fee ??
+          item.professionalFee ??
+          item.price ??
+          item.rate ??
+          item.host_price ??
+          item.hostPrice ??
+          0
+        );
+
+        const hostDisplayName = specialization
+          ? `${hostName} - ${specialization}`
+          : hostName;
+
+        const option = document.createElement("option");
+        option.value = hostId;
+        option.textContent = price > 0
+          ? `${hostDisplayName} (${formatCurrency(price)})`
+          : hostDisplayName;
+
+        option.dataset.name = hostDisplayName;
+        option.dataset.price = price;
+
+        hostOptionInput.appendChild(option);
+      });
+
+      hostOptionInput.addEventListener("change", computePricing);
+      computePricing();
+
+    } catch (error) {
+      console.error("Host load failed:", error);
+      hostOptionInput.innerHTML = `<option value="">Failed to load hosts</option>`;
+      showToast("Failed to load hosts from backend.", "error", 4000);
+    }
+  }
+
+  async function fetchSoundLights() {
+    if (!soundLightOptionInput) return;
+
+    soundLightOptionInput.innerHTML = `<option value="">Loading sound systems...</option>`;
+
+    try {
+      const response = await fetch(SOUND_LIGHT_API, {
+        method: "GET",
+        headers: {
+          Accept: "application/json"
+        }
+      });
+
+      const raw = await response.text();
+      const data = raw ? JSON.parse(raw) : [];
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const soundLights = (Array.isArray(data) ? data : []).filter(item => {
+        const isDeleted = item.is_deleted ?? item.isDeleted ?? false;
+        const status = String(item.availability_status ?? item.availabilityStatus ?? "").toLowerCase();
+
+        return !isDeleted && status !== "unavailable";
+      });
+
+      soundLightOptionInput.innerHTML = `<option value="">No sound system selected</option>`;
+
+      soundLights.forEach(item => {
+        const soundLightId =
+          item.sound_light_id ??
+          item.soundLightId ??
+          item.soundlight_id ??
+          item.soundlightId;
+
+        const serviceName =
+          item.service_name ??
+          item.serviceName ??
+          item.sound_light_name ??
+          item.soundLightName ??
+          item.soundlight_name ??
+          item.soundlightName ??
+          item.name ??
+          item.package_name ??
+          item.packageName ??
+          "Sound System";
+
+        const price = Number(
+          item.price ??
+          item.rate ??
+          item.sound_light_price ??
+          item.soundLightPrice ??
+          item.soundlight_price ??
+          item.soundlightPrice ??
+          0
+        );
+
+        const option = document.createElement("option");
+        option.value = soundLightId;
+        option.textContent = price > 0
+          ? `${serviceName} (${formatCurrency(price)})`
+          : serviceName;
+
+        option.dataset.name = serviceName;
+        option.dataset.price = price;
+
+        soundLightOptionInput.appendChild(option);
+      });
+
+      soundLightOptionInput.addEventListener("change", computePricing);
+      computePricing();
+
+    } catch (error) {
+      console.error("Sound system load failed:", error);
+      soundLightOptionInput.innerHTML = `<option value="">Failed to load sound systems</option>`;
+      showToast("Failed to load sound systems from backend.", "error", 4000);
+    }
+  }
+
   async function fetchMenuCatalog() {
     try {
       if (menuList) {
@@ -419,6 +847,9 @@ document.addEventListener("DOMContentLoaded", function () {
           description: getValue(item, "description", "description"),
           availability_status: getValue(item, "availability_status", "availabilityStatus")
         }));
+
+      console.log("Loaded menuCatalog:", menuCatalog);
+
     } catch (error) {
       console.error("Menu catalog load failed:", error);
       menuCatalog = [];
@@ -426,6 +857,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     renderMenu();
+    handleMenuChoice();
   }
 
   function getMenuScore(item) {
@@ -543,10 +975,64 @@ document.addEventListener("DOMContentLoaded", function () {
 
         if (!item) return;
 
+        const foodLimit = getPackageFoodLimit();
+        const dessertLimit = getPackageDessertLimit();
+        const pastaLimit = getPackagePastaLimit();
+
+        const isFreeGivenItem = isRiceOrDrink(item);
+        const isDessertItem = isDessert(item);
+        const isPastaItem = isPasta(item);
+
+        const selectedFoodMenus = getSelectedFoodMenus();
+        const selectedDesserts = getSelectedDesserts();
+        const selectedPastas = getSelectedPastas();
+
+        if (
+          foodLimit !== null &&
+          !isFreeGivenItem &&
+          !isDessertItem &&
+          !isPastaItem &&
+          selectedFoodMenus.length >= foodLimit
+        ) {
+          showToast(
+            `${isPackage2() ? "Package 2" : "Package 1"} allows up to ${foodLimit} food menu choices only.`,
+            "warning",
+            4000
+          );
+          return;
+        }
+
+        if (
+          dessertLimit !== null &&
+          isDessertItem &&
+          selectedDesserts.length >= dessertLimit
+        ) {
+          showToast(
+            `${isPackage2() ? "Package 2" : "Package 1"} allows up to ${dessertLimit} dessert only.`,
+            "warning",
+            4000
+          );
+          return;
+        }
+
+        if (
+          pastaLimit !== null &&
+          isPastaItem &&
+          selectedPastas.length >= pastaLimit
+        ) {
+          showToast(
+            `Package 2 allows up to ${pastaLimit} pasta choice only.`,
+            "warning",
+            4000
+          );
+          return;
+        }
+
         selectedMenus.set(menuId, {
           menu_id: item.menu_id,
           food_name: item.food_name,
           category: item.category,
+          description: item.description,
           quantity
         });
 
@@ -584,7 +1070,24 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!selectedFoodList || !selectedCountBadge) return;
 
     const items = [...selectedMenus.values()];
-    selectedCountBadge.textContent = `${items.length} item(s)`;
+
+    const foodLimit = getPackageFoodLimit();
+    const dessertLimit = getPackageDessertLimit();
+    const pastaLimit = getPackagePastaLimit();
+
+    const selectedFoodMenus = getSelectedFoodMenus();
+    const selectedDesserts = getSelectedDesserts();
+    const selectedPastas = getSelectedPastas();
+
+    if (isPackage1()) {
+      selectedCountBadge.textContent =
+        `${selectedFoodMenus.length}/${foodLimit} food • ${selectedDesserts.length}/${dessertLimit} dessert`;
+    } else if (isPackage2()) {
+      selectedCountBadge.textContent =
+        `${selectedFoodMenus.length}/${foodLimit} food • ${selectedPastas.length}/${pastaLimit} pasta • ${selectedDesserts.length}/${dessertLimit} dessert`;
+    } else {
+      selectedCountBadge.textContent = `${items.length} item(s)`;
+    }
 
     if (!items.length) {
       selectedFoodList.className = "selected-food-list empty-state";
@@ -597,7 +1100,18 @@ document.addEventListener("DOMContentLoaded", function () {
       <div class="selected-food-item">
         <div>
           <strong>${escapeHtml(item.food_name)}</strong>
-          <span>${escapeHtml(item.category)} • Quantity: ${item.quantity}</span>
+          <span>
+            ${escapeHtml(item.description || item.category || "Menu")}
+            ${
+              isRiceOrDrink(item)
+                ? " • Included / not counted"
+                : isDessert(item)
+                  ? ` • Dessert • Quantity: ${item.quantity}`
+                  : isPasta(item)
+                    ? ` • Pasta • Quantity: ${item.quantity}`
+                    : ` • Food Menu • Quantity: ${item.quantity}`
+            }
+          </span>
         </div>
         <span class="count-badge">x${item.quantity}</span>
       </div>
@@ -660,14 +1174,26 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   calendar.render();
+
   fetchMenuCatalog();
   fetchDecorations();
+  fetchHosts();
+  fetchSoundLights();
+
   renderSelectedFood();
   loadSelectedPackage();
   computePricing();
+  updatePastaChoiceVisibility();
 
-  packageNameInput.addEventListener("input", applyPackagePrice);
-  packageNameInput.addEventListener("change", applyPackagePrice);
+  packageNameInput.addEventListener("input", function () {
+    applyPackagePrice();
+    updatePastaChoiceVisibility();
+  });
+
+  packageNameInput.addEventListener("change", function () {
+    applyPackagePrice();
+    updatePastaChoiceVisibility();
+  });
 
   [packagePriceInput, minimumPaxInput, expectedPaxInput].forEach(input => {
     input.addEventListener("input", computePricing);
@@ -676,6 +1202,10 @@ document.addEventListener("DOMContentLoaded", function () {
   [clientRequestInput, menuSearchInput, eventTypeInput].forEach(input => {
     input.addEventListener("input", renderMenu);
   });
+
+  if (menuChoiceInput) {
+    menuChoiceInput.addEventListener("change", handleMenuChoice);
+  }
 
   document.querySelectorAll('input[name="diet"]').forEach(input => {
     input.addEventListener("change", renderMenu);
@@ -697,8 +1227,68 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
 
-    if (!isPackageThree && selectedMenus.size === 0) {
+    if (!isPackageThree && !menuChoiceInput.value) {
+      showToast("Please choose Set A, Set B, Set C, Set D, or Customize Menu.", "warning");
+      return;
+    }
+
+    if (!isPackageThree && menuChoiceInput.value === "Customize" && selectedMenus.size === 0) {
       showToast("Please select at least one food item.", "warning");
+      return;
+    }
+
+    if (
+      !isPackageThree &&
+      menuChoiceInput.value !== "Customize" &&
+      getMenusByBuffetSet(menuChoiceInput.value).length === 0
+    ) {
+      showToast(`No menu found for ${menuChoiceInput.value}. Please check your Menu table.`, "warning", 4000);
+      return;
+    }
+
+    const foodLimit = getPackageFoodLimit();
+    const dessertLimit = getPackageDessertLimit();
+    const pastaLimit = getPackagePastaLimit();
+
+    if (
+      !isPackageThree &&
+      menuChoiceInput.value === "Customize" &&
+      foodLimit !== null &&
+      getSelectedFoodMenus().length > foodLimit
+    ) {
+      showToast(
+        `${isPackage2() ? "Package 2" : "Package 1"} allows up to ${foodLimit} food menu choices only.`,
+        "warning",
+        4000
+      );
+      return;
+    }
+
+    if (
+      !isPackageThree &&
+      menuChoiceInput.value === "Customize" &&
+      dessertLimit !== null &&
+      getSelectedDesserts().length > dessertLimit
+    ) {
+      showToast(
+        `${isPackage2() ? "Package 2" : "Package 1"} allows up to ${dessertLimit} dessert only.`,
+        "warning",
+        4000
+      );
+      return;
+    }
+
+    if (
+      !isPackageThree &&
+      menuChoiceInput.value === "Customize" &&
+      pastaLimit !== null &&
+      getSelectedPastas().length > pastaLimit
+    ) {
+      showToast(
+        `Package 2 allows up to ${pastaLimit} pasta choice only.`,
+        "warning",
+        4000
+      );
       return;
     }
 
@@ -725,13 +1315,34 @@ document.addEventListener("DOMContentLoaded", function () {
       additional_pax: pricing.additionalPax,
       extra_pax_charge: isPackageThree ? pricing.tableReservationAmount : pricing.extraCharge,
       total_amount: pricing.totalAmount,
-      client_request: isPackageThree ? "" : form.client_request.value.trim(),
-      selected_menus: isPackageThree ? [] : [...selectedMenus.values()],
+
+      client_request: isPackageThree || menuChoiceInput.value !== "Customize"
+        ? ""
+        : form.client_request.value.trim(),
+
+      menu_choice: isPackageThree ? null : menuChoiceInput.value,
+
+      selected_menus: isPackageThree
+        ? []
+        : menuChoiceInput.value === "Customize"
+          ? [...selectedMenus.values()]
+          : getMenusByBuffetSet(menuChoiceInput.value),
+
+      host_id: hostOptionInput && hostOptionInput.value ? Number(hostOptionInput.value) : null,
+      host_option: getSelectedHostName(),
+      host_price: pricing.hostPrice || 0,
+
+      sound_light_id: soundLightOptionInput && soundLightOptionInput.value ? Number(soundLightOptionInput.value) : null,
+      sound_light_option: getSelectedSoundLightName(),
+      sound_light_price: pricing.soundLightPrice || 0,
+
       table_count: isPackageThree ? pricing.tableCount : null,
       decoration_id: isPackageThree && decorationOption ? Number(decorationOption.value) : null,
       decoration_option: isPackageThree ? getSelectedDecorationName() : null,
       decoration_price: isPackageThree ? pricing.decorationPrice : 0
     };
+
+    console.log("Reservation payload:", payload);
 
     try {
       const response = await fetch(RESERVATION_API, {
@@ -752,22 +1363,25 @@ document.addEventListener("DOMContentLoaded", function () {
       }
 
       if (response.ok) {
-        showToast(result.message || "Booking request sent successfully!", "success");
+        showToast(result.message || "Booking request sent successfully! Redirecting to payment...", "success");
 
-        form.reset();
-        eventDateInput.value = "";
-        minimumPaxInput.value = 40;
-        selectedMenus.clear();
-        renderSelectedFood();
-        computePricing();
-        renderMenu();
+        const paymentData = {
+          reservation_id: result.reservation_id || result.reservationId || null,
+          client_id: Number(clientId),
+          client_name: fullName,
+          event_type: form.event_type.value.trim(),
+          event_date: form.event_date.value,
+          event_time: safeTime,
+          venue: form.venue.value.trim(),
+          package_name: form.package_name.value.trim(),
+          total_amount: pricing.totalAmount
+        };
 
-        if (selectedDateCell) {
-          selectedDateCell.classList.remove("fc-day-selected");
-          selectedDateCell = null;
-        }
+        localStorage.setItem("pendingPayment", JSON.stringify(paymentData));
 
-        calendar.refetchEvents();
+        setTimeout(() => {
+          window.location.href = "payment.html";
+        }, 1200);
       } else {
         showToast(result.message || `Failed to submit booking. HTTP ${response.status}`, "error", 4000);
       }
