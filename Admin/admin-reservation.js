@@ -34,11 +34,11 @@ function setAdminProfile() {
     admin.Email ||
     "BM's Catering";
 
-  document.querySelectorAll(".admin-info strong").forEach(el => {
+  document.querySelectorAll(".admin-chip strong").forEach(el => {
     el.textContent = fullName;
   });
 
-  document.querySelectorAll(".admin-info span").forEach(el => {
+  document.querySelectorAll(".admin-chip span").forEach(el => {
     el.textContent = email;
   });
 
@@ -49,6 +49,7 @@ function setAdminProfile() {
 
 const API_BASE = "https://localhost:7241";
 const DASHBOARD_ENDPOINT = `${API_BASE}/api/AdminDashboard`;
+const REPORT_API = `${API_BASE}/api/Report`;
 
 let reservations = [];
 let filteredReservations = [];
@@ -59,6 +60,11 @@ const pendingReservationsEl = document.getElementById("pendingReservations");
 const approvedReservationsEl = document.getElementById("approvedReservations");
 const cancelledReservationsEl = document.getElementById("cancelledReservations");
 const totalRevenueEl = document.getElementById("totalRevenue");
+
+const minPaxEl = document.getElementById("minPax");
+const maxPaxEl = document.getElementById("maxPax");
+const filterPackagesBody = document.getElementById("filterPackagesBody");
+const countHostBody = document.getElementById("countHostBody");
 
 const reservationTableBody = document.getElementById("reservationTableBody");
 const searchInput = document.getElementById("searchInput");
@@ -78,10 +84,26 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 async function initialLoad() {
   const success = await loadReservations(true);
+  await loadReservationReports();
 
   if (success) {
     startAutoRefresh();
   }
+}
+
+async function fetchJson(url) {
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      Accept: "application/json"
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP Error: ${response.status}`);
+  }
+
+  return await response.json();
 }
 
 function setupLogout() {
@@ -167,11 +189,140 @@ async function loadReservations(showLoading = true) {
   }
 }
 
+async function loadReservationReports() {
+  try {
+    const [minMaxPax, filterPackages, countHost] = await Promise.all([
+      fetchJson(`${REPORT_API}/min-max-pax`),
+      fetchJson(`${REPORT_API}/filter-packages`),
+      fetchJson(`${REPORT_API}/count-host-assigned-reservation`)
+    ]);
+
+    renderMinMaxPax(minMaxPax);
+    renderFilterPackages(filterPackages);
+    renderCountHostAssignedReservation(countHost);
+
+  } catch (error) {
+    console.error("Reservation reports error:", error);
+
+    if (filterPackagesBody) {
+      filterPackagesBody.innerHTML = `
+        <tr>
+          <td colspan="2" class="empty-state">Failed to load filtered packages.</td>
+        </tr>
+      `;
+    }
+
+    if (countHostBody) {
+      countHostBody.innerHTML = `
+        <tr>
+          <td colspan="2" class="empty-state">Failed to load host count report.</td>
+        </tr>
+      `;
+    }
+  }
+}
+
+function renderMinMaxPax(data) {
+  const minPax =
+    data?.min_pax ??
+    data?.minPax ??
+    data?.MinPax ??
+    data?.Min_Pax ??
+    0;
+
+  const maxPax =
+    data?.max_pax ??
+    data?.maxPax ??
+    data?.MaxPax ??
+    data?.Max_Pax ??
+    0;
+
+  if (minPaxEl) minPaxEl.textContent = minPax;
+  if (maxPaxEl) maxPaxEl.textContent = maxPax;
+}
+
+function renderFilterPackages(data) {
+  if (!filterPackagesBody) return;
+
+  const rows = Array.isArray(data) ? data : [];
+
+  if (rows.length === 0) {
+    filterPackagesBody.innerHTML = `
+      <tr>
+        <td colspan="2" class="empty-state">No reservations found within 100–300 pax.</td>
+      </tr>
+    `;
+    return;
+  }
+
+  filterPackagesBody.innerHTML = rows.map(item => {
+    const reservationId =
+      item.reservation_id ??
+      item.reservationId ??
+      item.ReservationId ??
+      item.Reservation_ID ??
+      "";
+
+    const totalPax =
+      item.total_pax ??
+      item.totalPax ??
+      item.TotalPax ??
+      item.Total_Pax ??
+      0;
+
+    return `
+      <tr>
+        <td>#${escapeHtml(reservationId)}</td>
+        <td>${escapeHtml(totalPax)}</td>
+      </tr>
+    `;
+  }).join("");
+}
+
+function renderCountHostAssignedReservation(data) {
+  if (!countHostBody) return;
+
+  const rows = Array.isArray(data) ? data : [];
+
+  if (rows.length === 0) {
+    countHostBody.innerHTML = `
+      <tr>
+        <td colspan="2" class="empty-state">No reservations with multiple hosts found.</td>
+      </tr>
+    `;
+    return;
+  }
+
+  countHostBody.innerHTML = rows.map(item => {
+    const reservationId =
+      item.reservation_id ??
+      item.reservationId ??
+      item.ReservationId ??
+      item.Reservation_ID ??
+      "";
+
+    const hostCount =
+      item.host_count ??
+      item.hostCount ??
+      item.HostCount ??
+      item.Host_Count ??
+      0;
+
+    return `
+      <tr>
+        <td>#${escapeHtml(reservationId)}</td>
+        <td>${escapeHtml(hostCount)}</td>
+      </tr>
+    `;
+  }).join("");
+}
+
 function startAutoRefresh() {
   stopAutoRefresh();
 
   refreshTimer = setInterval(async () => {
     await loadReservations(false);
+    await loadReservationReports();
   }, 5000);
 }
 

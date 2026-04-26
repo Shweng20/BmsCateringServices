@@ -52,31 +52,36 @@
     </header>
 
     <section class="stats-grid">
-  <div class="stat-card">
-    <span>Total Transactions</span>
-    <h3 id="totalTransactions">0</h3>
-  </div>
+      <div class="stat-card">
+        <span>Total Transactions</span>
+        <h3 id="totalTransactions">0</h3>
+      </div>
 
-  <div class="stat-card">
-    <span>Successful Transactions</span>
-    <h3 id="successfulTransactions">0</h3>
-  </div>
+      <div class="stat-card">
+        <span>Successful Transactions</span>
+        <h3 id="successfulTransactions">0</h3>
+      </div>
 
-  <div class="stat-card revenue-card">
-    <span>Successful Payment Amount</span>
-    <h3 id="totalSuccessfulPaymentAmount">₱0.00</h3>
-  </div>
+      <div class="stat-card revenue-card">
+        <span>Successful Payment Amount</span>
+        <h3 id="totalSuccessfulPaymentAmount">₱0.00</h3>
+      </div>
 
-  <div class="stat-card revenue-card">
-    <span>Total Client Revenue</span>
-    <h3 id="totalClientRevenue">₱0.00</h3>
-  </div>
+      <div class="stat-card revenue-card">
+        <span>Total Client Revenue</span>
+        <h3 id="totalClientRevenue">₱0.00</h3>
+      </div>
 
-  <div class="stat-card">
-    <span>Top Client</span>
-    <h3 id="topClient">None</h3>
-  </div>
-</section>
+      <div class="stat-card revenue-card">
+        <span>Total Package Price</span>
+        <h3 id="totalPackagePrice">₱0.00</h3>
+      </div>
+
+      <div class="stat-card">
+        <span>Top Client</span>
+        <h3 id="topClient">None</h3>
+      </div>
+    </section>
 
     <section class="reports-grid">
 
@@ -87,11 +92,7 @@
             <p>Review all customer transaction records.</p>
           </div>
 
-          <input
-            type="text"
-            id="transactionSearch"
-            placeholder="Search transaction..."
-          />
+          <input type="text" id="transactionSearch" placeholder="Search transaction..." />
         </div>
 
         <div class="table-wrap">
@@ -122,11 +123,7 @@
             <p>Client spending summary from reservations.</p>
           </div>
 
-          <input
-            type="text"
-            id="clientRevenueSearch"
-            placeholder="Search client..."
-          />
+          <input type="text" id="clientRevenueSearch" placeholder="Search client..." />
         </div>
 
         <div class="table-wrap">
@@ -147,6 +144,62 @@
         </div>
       </div>
 
+    </section>
+
+    <section class="panel payment-customer-panel">
+      <div class="panel-header">
+        <div>
+          <h3>Total Payment per Customer</h3>
+          <p>Total completed payments grouped by client.</p>
+        </div>
+
+        <input type="text" id="paymentCustomerSearch" placeholder="Search client..." />
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Client Name</th>
+              <th>Total Payment</th>
+            </tr>
+          </thead>
+
+          <tbody id="paymentCustomerBody">
+            <tr>
+              <td colspan="2" class="empty-state">Loading payments...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel menu-items-panel">
+      <div class="panel-header">
+        <div>
+          <h3>Menu Items Ordered</h3>
+          <p>Most ordered menu items summary.</p>
+        </div>
+
+        <input type="text" id="menuItemsSearch" placeholder="Search menu item..." />
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Food Name</th>
+              <th>Order Count</th>
+            </tr>
+          </thead>
+
+          <tbody id="menuItemsBody">
+            <tr>
+              <td colspan="2" class="empty-state">Loading menu items...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </section>
 
   </main>

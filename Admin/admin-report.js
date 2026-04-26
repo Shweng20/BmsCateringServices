@@ -67,24 +67,32 @@ const REPORT_API = `${API_BASE}/api/Report`;
 
 const TRANSACTION_SUMMARY_URL = `${REPORT_API}/transaction-summary-report`;
 const TOTAL_REVENUE_PER_CLIENT_URL = `${REPORT_API}/total-revenue-per-client`;
-const TOTAL_SUCCESSFUL_TRANSACTION_AMOUNT_URL =
-  `${REPORT_API}/total-successful-transaction-amount`;
+const TOTAL_SUCCESSFUL_TRANSACTION_AMOUNT_URL = `${REPORT_API}/total-successful-transaction-amount`;
+const TOTAL_PAYMENT_CUSTOMER_URL = `${REPORT_API}/total-payment-customer`;
+const TOTAL_PACKAGE_PRICE_URL = `${REPORT_API}/total-package-price`;
+const MENU_ITEMS_ORDERED_URL = `${REPORT_API}/menu-items-ordered`;
 
 const transactionTableBody = document.getElementById("transactionTableBody");
 const clientRevenueTableBody = document.getElementById("clientRevenueTableBody");
+const paymentCustomerBody = document.getElementById("paymentCustomerBody");
+const menuItemsBody = document.getElementById("menuItemsBody");
 
 const transactionSearch = document.getElementById("transactionSearch");
 const clientRevenueSearch = document.getElementById("clientRevenueSearch");
+const paymentCustomerSearch = document.getElementById("paymentCustomerSearch");
+const menuItemsSearch = document.getElementById("menuItemsSearch");
 
 const totalTransactionsEl = document.getElementById("totalTransactions");
 const successfulTransactionsEl = document.getElementById("successfulTransactions");
-const totalSuccessfulPaymentAmountEl =
-  document.getElementById("totalSuccessfulPaymentAmount");
+const totalSuccessfulPaymentAmountEl = document.getElementById("totalSuccessfulPaymentAmount");
 const totalClientRevenueEl = document.getElementById("totalClientRevenue");
+const totalPackagePriceEl = document.getElementById("totalPackagePrice");
 const topClientEl = document.getElementById("topClient");
 
 let transactions = [];
 let clientRevenue = [];
+let paymentCustomerData = [];
+let menuItemsData = [];
 
 document.addEventListener("DOMContentLoaded", async () => {
   setAdminProfile();
@@ -99,13 +107,24 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (clientRevenueSearch) {
     clientRevenueSearch.addEventListener("input", filterClientRevenue);
   }
+
+  if (paymentCustomerSearch) {
+    paymentCustomerSearch.addEventListener("input", filterPaymentCustomer);
+  }
+
+  if (menuItemsSearch) {
+    menuItemsSearch.addEventListener("input", filterMenuItemsOrdered);
+  }
 });
 
 async function loadReports() {
   await Promise.all([
     loadTransactionSummary(),
     loadTotalRevenuePerClient(),
-    loadTotalSuccessfulPaymentAmount()
+    loadTotalSuccessfulPaymentAmount(),
+    loadTotalPaymentCustomer(),
+    loadTotalPackagePrice(),
+    loadMenuItemsOrdered()
   ]);
 
   updateCards();
@@ -115,7 +134,7 @@ async function fetchJson(url) {
   const response = await fetch(url, {
     method: "GET",
     headers: {
-      "Accept": "application/json"
+      Accept: "application/json"
     }
   });
 
@@ -192,6 +211,75 @@ async function loadTotalSuccessfulPaymentAmount() {
   }
 }
 
+async function loadTotalPaymentCustomer() {
+  try {
+    const data = await fetchJson(TOTAL_PAYMENT_CUSTOMER_URL);
+    paymentCustomerData = Array.isArray(data) ? data : [];
+
+    paymentCustomerData.sort((a, b) => {
+      const amountA = Number(getValue(a, "total_amount", "totalAmount") || 0);
+      const amountB = Number(getValue(b, "total_amount", "totalAmount") || 0);
+      return amountB - amountA;
+    });
+
+    renderTotalPaymentCustomer(paymentCustomerData);
+
+  } catch (error) {
+    console.error("Total Payment Customer error:", error);
+
+    if (paymentCustomerBody) {
+      paymentCustomerBody.innerHTML = `
+        <tr>
+          <td colspan="2" class="empty-state">Failed to load payment data.</td>
+        </tr>
+      `;
+    }
+  }
+}
+
+async function loadTotalPackagePrice() {
+  try {
+    const data = await fetchJson(TOTAL_PACKAGE_PRICE_URL);
+
+    const total =
+      data.total_package_price ??
+      data.totalPackagePrice ??
+      data.TotalPackagePrice ??
+      data.Total_Package_Price ??
+      0;
+
+    if (totalPackagePriceEl) {
+      totalPackagePriceEl.textContent = formatCurrency(total);
+    }
+
+  } catch (error) {
+    console.error("Total Package Price error:", error);
+
+    if (totalPackagePriceEl) {
+      totalPackagePriceEl.textContent = "₱0.00";
+    }
+  }
+}
+
+async function loadMenuItemsOrdered() {
+  try {
+    const data = await fetchJson(MENU_ITEMS_ORDERED_URL);
+    menuItemsData = Array.isArray(data) ? data : [];
+
+    renderMenuItemsOrdered(menuItemsData);
+  } catch (error) {
+    console.error("Menu Items Ordered error:", error);
+
+    if (menuItemsBody) {
+      menuItemsBody.innerHTML = `
+        <tr>
+          <td colspan="2" class="empty-state">Failed to load menu items.</td>
+        </tr>
+      `;
+    }
+  }
+}
+
 function renderTransactionTable(data) {
   if (!transactionTableBody) return;
 
@@ -252,6 +340,78 @@ function renderClientRevenueTable(data) {
   }).join("");
 }
 
+function renderTotalPaymentCustomer(data) {
+  if (!paymentCustomerBody) return;
+
+  if (!data || data.length === 0) {
+    paymentCustomerBody.innerHTML = `
+      <tr>
+        <td colspan="2" class="empty-state">No completed payment records found.</td>
+      </tr>
+    `;
+    return;
+  }
+
+  paymentCustomerBody.innerHTML = data.map(item => {
+    const fullName =
+      item.full_name ??
+      item.fullName ??
+      item.FullName ??
+      item.Full_Name ??
+      "Unnamed Client";
+
+    const totalAmount =
+      item.total_amount ??
+      item.totalAmount ??
+      item.TotalAmount ??
+      item.Total_Amount ??
+      0;
+
+    return `
+      <tr>
+        <td>${escapeHTML(fullName)}</td>
+        <td class="amount">${formatCurrency(totalAmount)}</td>
+      </tr>
+    `;
+  }).join("");
+}
+
+function renderMenuItemsOrdered(data) {
+  if (!menuItemsBody) return;
+
+  if (!data || data.length === 0) {
+    menuItemsBody.innerHTML = `
+      <tr>
+        <td colspan="2" class="empty-state">No menu order records found.</td>
+      </tr>
+    `;
+    return;
+  }
+
+  menuItemsBody.innerHTML = data.map(item => {
+    const foodName =
+      item.food_name ??
+      item.foodName ??
+      item.FoodName ??
+      item.Food_Name ??
+      "Unnamed Food";
+
+    const orderCount =
+      item.order_count ??
+      item.orderCount ??
+      item.OrderCount ??
+      item.Order_Count ??
+      0;
+
+    return `
+      <tr>
+        <td>${escapeHTML(foodName)}</td>
+        <td>${escapeHTML(orderCount)}</td>
+      </tr>
+    `;
+  }).join("");
+}
+
 function filterTransactions() {
   if (!transactionSearch) return;
 
@@ -287,6 +447,44 @@ function filterClientRevenue() {
   renderClientRevenueTable(filtered);
 }
 
+function filterPaymentCustomer() {
+  if (!paymentCustomerSearch) return;
+
+  const keyword = paymentCustomerSearch.value.toLowerCase().trim();
+
+  const filtered = paymentCustomerData.filter(item => {
+    const fullName =
+      item.full_name ??
+      item.fullName ??
+      item.FullName ??
+      item.Full_Name ??
+      "";
+
+    return String(fullName).toLowerCase().includes(keyword);
+  });
+
+  renderTotalPaymentCustomer(filtered);
+}
+
+function filterMenuItemsOrdered() {
+  if (!menuItemsSearch) return;
+
+  const keyword = menuItemsSearch.value.toLowerCase().trim();
+
+  const filtered = menuItemsData.filter(item => {
+    const foodName =
+      item.food_name ??
+      item.foodName ??
+      item.FoodName ??
+      item.Food_Name ??
+      "";
+
+    return String(foodName).toLowerCase().includes(keyword);
+  });
+
+  renderMenuItemsOrdered(filtered);
+}
+
 function updateCards() {
   const totalTransactions = transactions.length;
 
@@ -310,21 +508,10 @@ function updateCards() {
     ? getValue(clientRevenue[0], "full_name", "fullName")
     : "None";
 
-  if (totalTransactionsEl) {
-    totalTransactionsEl.textContent = totalTransactions;
-  }
-
-  if (successfulTransactionsEl) {
-    successfulTransactionsEl.textContent = successfulTransactions;
-  }
-
-  if (totalClientRevenueEl) {
-    totalClientRevenueEl.textContent = formatCurrency(totalRevenue);
-  }
-
-  if (topClientEl) {
-    topClientEl.textContent = topClient || "None";
-  }
+  if (totalTransactionsEl) totalTransactionsEl.textContent = totalTransactions;
+  if (successfulTransactionsEl) successfulTransactionsEl.textContent = successfulTransactions;
+  if (totalClientRevenueEl) totalClientRevenueEl.textContent = formatCurrency(totalRevenue);
+  if (topClientEl) topClientEl.textContent = topClient || "None";
 }
 
 function getValue(item, snakeKey, camelKey) {

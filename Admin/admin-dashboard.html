@@ -80,6 +80,28 @@
         </div>
       </section>
 
+      <section class="stats-grid secondary-stats">
+        <div class="stat-card revenue-card">
+          <span>Total Expense</span>
+          <h3 id="totalExpense">₱0.00</h3>
+        </div>
+
+        <div class="stat-card">
+          <span>Host Available</span>
+          <h3 id="hostAvailable">0</h3>
+        </div>
+
+        <div class="stat-card">
+          <span>Availed Host</span>
+          <h3 id="availedHost">0</h3>
+        </div>
+
+        <div class="stat-card">
+          <span>Decorations Used</span>
+          <h3 id="totalDecorationUsed">0</h3>
+        </div>
+      </section>
+
       <section class="panel">
         <div class="panel-header">
           <h3>Business Analytics</h3>
@@ -103,18 +125,32 @@
           </div>
         </div>
       </section>
+
+      <section class="panel usage-panel">
+        <div class="panel-header">
+          <div>
+            <h3>Service Usage Frequency</h3>
+            <p>Sound and light service usage summary.</p>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table class="usage-table">
+            <thead>
+              <tr>
+                <th>Service Name</th>
+                <th>Usage Count</th>
+              </tr>
+            </thead>
+            <tbody id="serviceUsageBody">
+              <tr>
+                <td colspan="2" class="empty-state">Loading service usage...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
     </main>
-  </div>
-
-  <div class="modal-backdrop hidden" id="detailsModal">
-    <div class="modal">
-      <div class="modal-header">
-        <h3>Reservation Details</h3>
-        <button class="close-btn" id="closeModalBtn" type="button">&times;</button>
-      </div>
-
-      <div class="modal-body" id="modalBody"></div>
-    </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

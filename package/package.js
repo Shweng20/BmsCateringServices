@@ -2,11 +2,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   setClientNavbar();
 
   const PACKAGE_API = "https://localhost:7241/Package";
+  const MOST_BOOKED_API = "https://localhost:7241/api/Report/most-booked-package";
 
   const loadingState = document.getElementById("loadingState");
   const errorState = document.getElementById("errorState");
   const emptyState = document.getElementById("emptyState");
   const packageGrid = document.getElementById("packageGrid");
+
+  let mostBookedPackageName = "";
 
   function getStoredClient() {
     const raw = localStorage.getItem("clientUser");
@@ -46,6 +49,37 @@ document.addEventListener("DOMContentLoaded", async () => {
     return String(value || "").trim().toLowerCase();
   }
 
+  function isMostBooked(packageName) {
+    return normalizeName(packageName) === normalizeName(mostBookedPackageName);
+  }
+
+  async function loadMostBookedPackage() {
+    try {
+      const response = await fetch(MOST_BOOKED_API, {
+        method: "GET",
+        headers: {
+          Accept: "application/json"
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      const first = Array.isArray(data) ? data[0] : data;
+
+      mostBookedPackageName =
+        first?.package_name ||
+        first?.packageName ||
+        first?.PackageName ||
+        "";
+    } catch (error) {
+      console.error("Most booked package error:", error);
+      mostBookedPackageName = "";
+    }
+  }
+
   function getPackageImage(packageName) {
     const name = normalizeName(packageName);
 
@@ -81,7 +115,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       return "Custom Pricing Available";
     }
 
-    return `Starts at ₱${packagePrice.toLocaleString("en-PH")} / 40 pax`;
+    return `Starts at ₱${packagePrice.toLocaleString("en-PH")}`;
   }
 
   function createPackageCard(pkg) {
@@ -89,12 +123,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     const description = pkg.description || "No description available for this package yet.";
     const packagePrice = getPackagePrice(packageName, pkg.price);
     const imageUrl = getPackageImage(packageName);
+    const featured = isMostBooked(packageName);
 
     const card = document.createElement("article");
-    card.className = "package-card";
+    card.className = featured
+      ? "package-card package-card--featured"
+      : "package-card";
 
     card.innerHTML = `
       <div class="package-card__image-wrap">
+        ${featured ? `<span class="featured-badge">Most Booked</span>` : ""}
         <img src="${imageUrl}" alt="${packageName}" class="package-card__image" />
       </div>
 
@@ -139,6 +177,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   try {
+    await loadMostBookedPackage();
+
     const response = await fetch(PACKAGE_API, {
       method: "GET",
       headers: {
@@ -152,8 +192,17 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const data = await response.json();
 
-    const packages = (Array.isArray(data) ? data : []).filter(pkg => {
+    let packages = (Array.isArray(data) ? data : []).filter(pkg => {
       return !(pkg.is_deleted ?? pkg.isDeleted ?? false);
+    });
+
+    packages.sort((a, b) => {
+      const aName = a.package_name || a.packageName || "";
+      const bName = b.package_name || b.packageName || "";
+
+      if (isMostBooked(aName)) return -1;
+      if (isMostBooked(bName)) return 1;
+      return 0;
     });
 
     if (loadingState) loadingState.classList.add("hidden");

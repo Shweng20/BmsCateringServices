@@ -35,11 +35,11 @@ function setAdminProfile() {
     admin.Email ||
     "BM's Catering";
 
-  document.querySelectorAll(".admin-info strong").forEach(el => {
+  document.querySelectorAll(".admin-chip strong").forEach(el => {
     el.textContent = fullName;
   });
 
-  document.querySelectorAll(".admin-info span").forEach(el => {
+  document.querySelectorAll(".admin-chip span").forEach(el => {
     el.textContent = email;
   });
 
@@ -77,10 +77,9 @@ const cancelledReservationsEl = document.getElementById("cancelledReservations")
 const totalRevenueEl = document.getElementById("totalRevenue");
 
 const totalExpenseEl = document.getElementById("totalExpense");
-const mostBookedPackageEl = document.getElementById("mostBookedPackage");
-const mostBookedCountEl = document.getElementById("mostBookedCount");
 const hostAvailableEl = document.getElementById("hostAvailable");
 const availedHostEl = document.getElementById("availedHost");
+const totalDecorationUsedEl = document.getElementById("totalDecorationUsed");
 
 document.addEventListener("DOMContentLoaded", async () => {
   setAdminProfile();
@@ -101,7 +100,7 @@ async function fetchJson(url) {
   const response = await fetch(url, {
     method: "GET",
     headers: {
-      "Accept": "application/json"
+      Accept: "application/json"
     }
   });
 
@@ -148,13 +147,15 @@ async function loadReportCards() {
     const [
       totalRevenue,
       totalExpense,
-      mostBooked,
-      hostAvailability
+      hostAvailability,
+      totalDecorationUsed,
+      serviceUsage
     ] = await Promise.all([
       fetchJson(`${REPORT_API}/total-revenue-all-reservations`),
       fetchJson(`${REPORT_API}/total-expense`),
-      fetchJson(`${REPORT_API}/most-booked-package`),
-      fetchJson(`${REPORT_API}/host-availability`)
+      fetchJson(`${REPORT_API}/host-availability`),
+      fetchJson(`${REPORT_API}/total-decoration-used`),
+      fetchJson(`${REPORT_API}/service-usage-frequency`)
     ]);
 
     const totalRevenueValue =
@@ -171,65 +172,121 @@ async function loadReportCards() {
       totalExpense.Total_Expenses ??
       0;
 
-    if (totalRevenueEl) {
-      totalRevenueEl.textContent = formatCurrency(totalRevenueValue);
-    }
+    const hostAvailableValue =
+      hostAvailability.host_available ??
+      hostAvailability.hostAvailable ??
+      hostAvailability.HostAvailable ??
+      hostAvailability.Host_Available ??
+      0;
 
-    if (totalExpenseEl) {
-      totalExpenseEl.textContent = formatCurrency(totalExpenseValue);
-    }
+    const availedHostValue =
+      hostAvailability.availed_host ??
+      hostAvailability.availedHost ??
+      hostAvailability.AvailedHost ??
+      hostAvailability.Availed_Host ??
+      0;
 
-    if (Array.isArray(mostBooked) && mostBooked.length > 0) {
-      const packageName =
-        mostBooked[0].package_name ??
-        mostBooked[0].packageName ??
-        mostBooked[0].PackageName ??
-        "No package";
+    const decorationUsedValue =
+      totalDecorationUsed.total_decorations_used ??
+      totalDecorationUsed.totalDecorationsUsed ??
+      totalDecorationUsed.TotalDecorationsUsed ??
+      totalDecorationUsed.Total_Decorations_Used ??
+      0;
 
-      const reservationCount =
-        mostBooked[0].reservation_count ??
-        mostBooked[0].reservationCount ??
-        mostBooked[0].ReservationCount ??
-        0;
+    if (totalRevenueEl) totalRevenueEl.textContent = formatCurrency(totalRevenueValue);
+    if (totalExpenseEl) totalExpenseEl.textContent = formatCurrency(totalExpenseValue);
+    if (hostAvailableEl) hostAvailableEl.textContent = hostAvailableValue;
+    if (availedHostEl) availedHostEl.textContent = availedHostValue;
+    if (totalDecorationUsedEl) totalDecorationUsedEl.textContent = decorationUsedValue;
 
-      if (mostBookedPackageEl) {
-        mostBookedPackageEl.textContent = packageName;
-      }
-
-      if (mostBookedCountEl) {
-        mostBookedCountEl.textContent = `${reservationCount} bookings`;
-      }
-    }
-
-    if (hostAvailability) {
-      const available =
-        hostAvailability.host_available ??
-        hostAvailability.hostAvailable ??
-        hostAvailability.HostAvailable ??
-        0;
-
-      const availed =
-        hostAvailability.availed_host ??
-        hostAvailability.availedHost ??
-        hostAvailability.AvailedHost ??
-        0;
-
-      if (hostAvailableEl) {
-        hostAvailableEl.textContent = available;
-      }
-
-      if (availedHostEl) {
-        availedHostEl.textContent = availed;
-      }
-    }
+    renderServiceUsage(serviceUsage);
 
   } catch (error) {
     console.error("Reports error:", error);
+  }
+}
 
-    if (totalRevenueEl) {
-      totalRevenueEl.textContent = "₱0.00";
+function renderServiceUsage(data) {
+  const body = document.getElementById("serviceUsageBody");
+  if (!body) return;
+
+  console.log("SERVICE USAGE API RESULT:", data);
+
+  const rows = Array.isArray(data)
+    ? data
+    : data?.data || data?.result || data?.serviceUsage || [];
+
+  if (!rows || rows.length === 0) {
+    body.innerHTML = `
+      <tr>
+        <td colspan="2" class="empty-state">No service usage records found.</td>
+      </tr>
+    `;
+    return;
+  }
+
+  body.innerHTML = rows.map(item => {
+    const serviceName = getFlexibleValue(item, [
+      "service_name",
+      "Service_Name",
+      "serviceName",
+      "ServiceName",
+      "SERVICE_NAME",
+      "service",
+      "name"
+    ]);
+
+    const usageCount = getFlexibleValue(item, [
+      "usage_count",
+      "Usage_Count",
+      "usageCount",
+      "UsageCount",
+      "USAGE_COUNT",
+      "count"
+    ]);
+
+    return `
+      <tr>
+        <td>${escapeHTML(serviceName || "Unnamed Service")}</td>
+        <td>${escapeHTML(usageCount ?? 0)}</td>
+      </tr>
+    `;
+  }).join("");
+}
+
+function getFlexibleValue(obj, keys) {
+  if (!obj) return "";
+
+  for (const key of keys) {
+    if (obj[key] !== undefined && obj[key] !== null) {
+      return obj[key];
     }
   }
+
+  const normalizedMap = {};
+
+  Object.keys(obj).forEach(originalKey => {
+    const normalizedKey = originalKey
+      .toLowerCase()
+      .replaceAll("_", "")
+      .replaceAll(" ", "");
+
+    normalizedMap[normalizedKey] = obj[originalKey];
+  });
+  
+
+  for (const key of keys) {
+    const normalizedKey = key
+      .toLowerCase()
+      .replaceAll("_", "")
+      .replaceAll(" ", "");
+
+    if (normalizedMap[normalizedKey] !== undefined && normalizedMap[normalizedKey] !== null) {
+      return normalizedMap[normalizedKey];
+    }
+  }
+
+  return "";
 }
 
 function renderCharts(data) {
@@ -246,14 +303,12 @@ function renderRevenueTrendChart(data) {
   const labels = Object.keys(monthlyRevenue);
   const values = Object.values(monthlyRevenue);
 
-  if (revenueChart) {
-    revenueChart.destroy();
-  }
+  if (revenueChart) revenueChart.destroy();
 
   revenueChart = new Chart(canvas, {
     type: "line",
     data: {
-      labels: labels,
+      labels,
       datasets: [{
         label: "Revenue",
         data: values,
@@ -264,7 +319,7 @@ function renderRevenueTrendChart(data) {
     },
     options: {
       responsive: true,
-      maintainAspectRatio: true,
+      maintainAspectRatio: false,
       plugins: {
         legend: {
           display: true
@@ -295,9 +350,7 @@ function renderReservationStatusChart(data) {
     normalizeStatus(getValue(r, "reservation_status", "reservationStatus")) === "cancelled"
   ).length;
 
-  if (statusChart) {
-    statusChart.destroy();
-  }
+  if (statusChart) statusChart.destroy();
 
   statusChart = new Chart(canvas, {
     type: "doughnut",
@@ -327,14 +380,12 @@ function renderMonthlyBookingsChart(data) {
   const labels = Object.keys(monthlyBookings);
   const values = Object.values(monthlyBookings);
 
-  if (monthlyBookingsChart) {
-    monthlyBookingsChart.destroy();
-  }
+  if (monthlyBookingsChart) monthlyBookingsChart.destroy();
 
   monthlyBookingsChart = new Chart(canvas, {
     type: "bar",
     data: {
-      labels: labels,
+      labels,
       datasets: [{
         label: "Bookings",
         data: values
@@ -432,13 +483,20 @@ function normalizeStatus(value) {
 function formatCurrency(value) {
   const numberValue = Number(value);
 
-  if (isNaN(numberValue)) {
-    return "₱0.00";
-  }
+  if (isNaN(numberValue)) return "₱0.00";
 
   return numberValue.toLocaleString("en-PH", {
     style: "currency",
     currency: "PHP",
     minimumFractionDigits: 2
   });
+}
+
+function escapeHTML(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }

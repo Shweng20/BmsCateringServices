@@ -346,3 +346,25 @@ body {
     padding: 12px 18px;
   }
 }
+
+.package-card--featured {
+  border: 2px solid var(--accent);
+  box-shadow: 0 18px 40px rgba(26, 163, 154, 0.18);
+}
+
+.featured-badge {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  background: var(--accent);
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  z-index: 2;
+}
+
+.package-card__image-wrap {
+  position: relative;
+}
