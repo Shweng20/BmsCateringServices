@@ -1,10 +1,10 @@
 document.addEventListener("DOMContentLoaded", function () {
-const API_BASE = "https://bmscatering-api.azurewebsites.net";
-const RESERVATION_API = `${API_BASE}/Reservation`;
-const MENU_API = `${API_BASE}/Menu`;
-const DECORATION_API = `${API_BASE}/Decoration`;
-const HOST_API = `${API_BASE}/Host`;
-const SOUND_LIGHT_API = `${API_BASE}/SoundLight`;
+  const API_BASE = "https://localhost:7241";
+  const RESERVATION_API = `${API_BASE}/Reservation`;
+  const MENU_API = `${API_BASE}/Menu`;
+  const DECORATION_API = `${API_BASE}/Decoration`;
+  const HOST_API = `${API_BASE}/Host`;
+  const SOUND_LIGHT_API = `${API_BASE}/SoundLight`;
 
   const EXTRA_PAX_RATE = 400;
   const PACKAGE3_TABLE_RATE_PER_PAX = 200;
@@ -56,8 +56,10 @@ const SOUND_LIGHT_API = `${API_BASE}/SoundLight`;
     "package 2": 20000
   };
 
-  minimumPaxInput.value = 40;
-  minimumPaxInput.readOnly = true;
+  if (minimumPaxInput) {
+    minimumPaxInput.value = 40;
+    minimumPaxInput.readOnly = true;
+  }
 
   function showToast(message, type = "info", duration = 3000) {
     if (!toastContainer) {
@@ -109,8 +111,9 @@ const SOUND_LIGHT_API = `${API_BASE}/SoundLight`;
 
     return (
       menuChoiceInput.closest(".form-group") ||
-      menuChoiceInput.closest(".form-control-group") ||
+      menuChoiceInput.closest(".field") ||
       menuChoiceInput.closest(".input-group") ||
+      menuChoiceInput.closest(".form-control-group") ||
       menuChoiceInput.parentElement
     );
   }
@@ -335,27 +338,19 @@ const SOUND_LIGHT_API = `${API_BASE}/SoundLight`;
       }));
   }
 
-  function handleMenuChoice() {
-  if (!menuChoiceInput) return;
+  function hidePackage3MenuFields() {
+    const menuChoiceGroup = getMenuChoiceGroup();
+    const menuSection = document.querySelector(".menu-section");
+    const selectionBox = document.querySelector(".selection-box:not(#selectedSetPreview)");
+    const filterRow = document.querySelector(".filter-row");
+    const clientRequestGroup = clientRequestInput?.closest(".form-group");
 
-  const choice = menuChoiceInput.value;
-
-  const menuChoiceGroup =
-    menuChoiceInput.closest(".form-group") ||
-    menuChoiceInput.closest(".field") ||
-    menuChoiceInput.closest(".input-group") ||
-    menuChoiceInput.parentElement;
-
-  const menuSection = document.querySelector(".menu-section");
-  const selectionBox = document.querySelector(".selection-box:not(#selectedSetPreview)");
-  const filterRow = document.querySelector(".filter-row");
-  const clientRequestGroup = clientRequestInput?.closest(".form-group");
-
-  // PACKAGE 3: no menu selection needed
-  if (isPackage3()) {
     selectedMenus.clear();
 
-    if (menuChoiceInput) menuChoiceInput.value = "";
+    if (menuChoiceInput) {
+      menuChoiceInput.value = "";
+      menuChoiceInput.removeAttribute("required");
+    }
 
     if (menuChoiceGroup) menuChoiceGroup.classList.add("hidden");
     if (selectedSetPreview) selectedSetPreview.classList.add("hidden");
@@ -365,76 +360,91 @@ const SOUND_LIGHT_API = `${API_BASE}/SoundLight`;
     if (clientRequestGroup) clientRequestGroup.classList.add("hidden");
 
     renderSelectedFood();
-    return;
   }
 
-  // PACKAGE 1 AND 2
-  if (menuChoiceGroup) menuChoiceGroup.classList.remove("hidden");
+  function handleMenuChoice() {
+    if (!menuChoiceInput) return;
 
-  selectedMenus.clear();
+    if (isPackage3()) {
+      hidePackage3MenuFields();
+      return;
+    }
 
-  if (choice === "Customize") {
-    if (selectedSetPreview) selectedSetPreview.classList.add("hidden");
+    const choice = menuChoiceInput.value;
 
-    if (menuSection) menuSection.classList.remove("hidden");
-    if (selectionBox) selectionBox.classList.remove("hidden");
-    if (filterRow) filterRow.classList.remove("hidden");
-    if (clientRequestGroup) clientRequestGroup.classList.remove("hidden");
+    const menuChoiceGroup = getMenuChoiceGroup();
+    const menuSection = document.querySelector(".menu-section");
+    const selectionBox = document.querySelector(".selection-box:not(#selectedSetPreview)");
+    const filterRow = document.querySelector(".filter-row");
+    const clientRequestGroup = clientRequestInput?.closest(".form-group");
 
-    updatePastaChoiceVisibility();
-    renderMenu();
-    renderSelectedFood();
-    return;
-  }
+    selectedMenus.clear();
 
-  if (["Buffet A", "Buffet B", "Buffet C", "Buffet D"].includes(choice)) {
-    const setMenus = getMenusByBuffetSet(choice);
+    if (menuChoiceGroup) menuChoiceGroup.classList.remove("hidden");
+    menuChoiceInput.setAttribute("required", "required");
+
+    if (choice === "Customize") {
+      if (selectedSetPreview) selectedSetPreview.classList.add("hidden");
+
+      if (menuSection) menuSection.classList.remove("hidden");
+      if (selectionBox) selectionBox.classList.remove("hidden");
+      if (filterRow) filterRow.classList.remove("hidden");
+      if (clientRequestGroup) clientRequestGroup.classList.remove("hidden");
+
+      updatePastaChoiceVisibility();
+      renderMenu();
+      renderSelectedFood();
+      return;
+    }
+
+    if (["Buffet A", "Buffet B", "Buffet C", "Buffet D"].includes(choice)) {
+      const setMenus = getMenusByBuffetSet(choice);
+
+      if (menuSection) menuSection.classList.add("hidden");
+      if (selectionBox) selectionBox.classList.add("hidden");
+      if (filterRow) filterRow.classList.add("hidden");
+      if (clientRequestGroup) clientRequestGroup.classList.add("hidden");
+
+      if (selectedSetPreview) selectedSetPreview.classList.remove("hidden");
+      if (selectedSetBadge) selectedSetBadge.textContent = choice.replace("Buffet", "Set");
+
+      if (selectedSetList) {
+        if (setMenus.length === 0) {
+          selectedSetList.className = "selected-food-list empty-state";
+          selectedSetList.textContent = `No menu found for ${choice}. Check Menu.category in database.`;
+        } else {
+          selectedSetList.className = "selected-food-list";
+          selectedSetList.innerHTML = setMenus.map(item => `
+            <div class="selected-food-item">
+              <div>
+                <strong>${escapeHtml(item.food_name)}</strong>
+                <span>${escapeHtml(item.category || item.description || "Menu")}</span>
+              </div>
+              <span class="count-badge">Included</span>
+            </div>
+          `).join("");
+        }
+      }
+
+      renderSelectedFood();
+      return;
+    }
+
+    if (selectedSetPreview) selectedSetPreview.classList.remove("hidden");
+    if (selectedSetBadge) selectedSetBadge.textContent = "No set selected";
+
+    if (selectedSetList) {
+      selectedSetList.className = "selected-food-list empty-state";
+      selectedSetList.textContent = "Please choose Set A, B, C, D, or Customize.";
+    }
 
     if (menuSection) menuSection.classList.add("hidden");
     if (selectionBox) selectionBox.classList.add("hidden");
     if (filterRow) filterRow.classList.add("hidden");
     if (clientRequestGroup) clientRequestGroup.classList.add("hidden");
 
-    if (selectedSetPreview) selectedSetPreview.classList.remove("hidden");
-    if (selectedSetBadge) selectedSetBadge.textContent = choice.replace("Buffet", "Set");
-
-    if (selectedSetList) {
-      if (setMenus.length === 0) {
-        selectedSetList.className = "selected-food-list empty-state";
-        selectedSetList.textContent = `No menu found for ${choice}. Check Menu.category in database.`;
-      } else {
-        selectedSetList.className = "selected-food-list";
-        selectedSetList.innerHTML = setMenus.map(item => `
-          <div class="selected-food-item">
-            <div>
-              <strong>${escapeHtml(item.food_name)}</strong>
-              <span>${escapeHtml(item.category || item.description || "Menu")}</span>
-            </div>
-            <span class="count-badge">Included</span>
-          </div>
-        `).join("");
-      }
-    }
-
     renderSelectedFood();
-    return;
   }
-
-  if (selectedSetPreview) selectedSetPreview.classList.remove("hidden");
-  if (selectedSetBadge) selectedSetBadge.textContent = "No set selected";
-
-  if (selectedSetList) {
-    selectedSetList.className = "selected-food-list empty-state";
-    selectedSetList.textContent = "Please choose Set A, B, C, D, or Customize.";
-  }
-
-  if (menuSection) menuSection.classList.add("hidden");
-  if (selectionBox) selectionBox.classList.add("hidden");
-  if (filterRow) filterRow.classList.add("hidden");
-  if (clientRequestGroup) clientRequestGroup.classList.add("hidden");
-
-  renderSelectedFood();
-}
 
   function applyPackagePrice() {
     const packageName = packageNameInput.value.trim().toLowerCase();
@@ -449,7 +459,9 @@ const SOUND_LIGHT_API = `${API_BASE}/SoundLight`;
 
     minimumPaxInput.value = 40;
     minimumPaxInput.readOnly = true;
+
     computePricing();
+    updateTableCount();
   }
 
   function loadSelectedPackage() {
@@ -457,6 +469,7 @@ const SOUND_LIGHT_API = `${API_BASE}/SoundLight`;
 
     if (!rawPackage) {
       computePricing();
+      updateTableCount();
       return;
     }
 
@@ -484,11 +497,13 @@ const SOUND_LIGHT_API = `${API_BASE}/SoundLight`;
 
       computePricing();
       updatePastaChoiceVisibility();
+      updateTableCount();
     } catch (error) {
       console.error("Invalid selectedPackage:", error);
       localStorage.removeItem("selectedPackage");
       computePricing();
       updatePastaChoiceVisibility();
+      updateTableCount();
     }
   }
 
@@ -512,21 +527,22 @@ const SOUND_LIGHT_API = `${API_BASE}/SoundLight`;
     if (isPackage3()) {
       if (package3Options) package3Options.classList.remove("hidden");
       if (menuChoiceGroup) menuChoiceGroup.classList.add("hidden");
-      if (selectedSetPreview) selectedSetPreview.classList.add("hidden");
 
-      selectedMenus.clear();
-
-      if (menuChoiceInput) {
-        menuChoiceInput.value = "";
-      }
+      hidePackage3MenuFields();
     } else {
       if (package3Options) package3Options.classList.add("hidden");
+
+      if (menuChoiceInput) {
+        menuChoiceInput.setAttribute("required", "required");
+      }
+
       if (menuChoiceGroup) menuChoiceGroup.classList.remove("hidden");
+      handleMenuChoice();
     }
 
     updatePastaChoiceVisibility();
     updateTableCount();
-    handleMenuChoice();
+    renderSelectedFood();
   }
 
   function computePricing() {
@@ -555,10 +571,18 @@ const SOUND_LIGHT_API = `${API_BASE}/SoundLight`;
       decorationPrice = getSelectedDecorationPrice();
       totalAmount = tableReservationAmount + decorationPrice + hostPrice + soundLightPrice;
 
-      basePriceText.textContent = `${paxForTable} pax × ${formatCurrency(PACKAGE3_TABLE_RATE_PER_PAX)}`;
-      additionalPaxText.textContent = `${tableCount} table(s)`;
-      extraChargeText.textContent =
-        `Table: ${formatCurrency(tableReservationAmount)} + Decoration: ${formatCurrency(decorationPrice)} + Host: ${formatCurrency(hostPrice)} + Sound: ${formatCurrency(soundLightPrice)}`;
+      if (basePriceText) {
+        basePriceText.textContent = `${paxForTable} pax × ${formatCurrency(PACKAGE3_TABLE_RATE_PER_PAX)}`;
+      }
+
+      if (additionalPaxText) {
+        additionalPaxText.textContent = `${tableCount} table(s)`;
+      }
+
+      if (extraChargeText) {
+        extraChargeText.textContent =
+          `Table: ${formatCurrency(tableReservationAmount)} + Decoration: ${formatCurrency(decorationPrice)} + Host: ${formatCurrency(hostPrice)} + Sound: ${formatCurrency(soundLightPrice)}`;
+      }
     } else {
       if (extraChargeLabel) {
         extraChargeLabel.textContent = "Extra pax charge + add-ons";
@@ -567,13 +591,23 @@ const SOUND_LIGHT_API = `${API_BASE}/SoundLight`;
       extraCharge = additionalPax * EXTRA_PAX_RATE;
       totalAmount = basePrice + extraCharge + hostPrice + soundLightPrice;
 
-      basePriceText.textContent = formatCurrency(basePrice);
-      additionalPaxText.textContent = additionalPax;
-      extraChargeText.textContent =
-        `Extra Pax: ${formatCurrency(extraCharge)} + Host: ${formatCurrency(hostPrice)} + Sound: ${formatCurrency(soundLightPrice)}`;
+      if (basePriceText) {
+        basePriceText.textContent = formatCurrency(basePrice);
+      }
+
+      if (additionalPaxText) {
+        additionalPaxText.textContent = additionalPax;
+      }
+
+      if (extraChargeText) {
+        extraChargeText.textContent =
+          `Extra Pax: ${formatCurrency(extraCharge)} + Host: ${formatCurrency(hostPrice)} + Sound: ${formatCurrency(soundLightPrice)}`;
+      }
     }
 
-    totalAmountText.textContent = formatCurrency(totalAmount);
+    if (totalAmountText) {
+      totalAmountText.textContent = formatCurrency(totalAmount);
+    }
 
     return {
       basePrice,
@@ -697,8 +731,13 @@ const SOUND_LIGHT_API = `${API_BASE}/SoundLight`;
         decorationSelect.appendChild(option);
       });
 
-      decorationSelect.addEventListener("change", computePricing);
+      decorationSelect.addEventListener("change", function () {
+        computePricing();
+        updateTableCount();
+      });
+
       computePricing();
+      updateTableCount();
 
     } catch (error) {
       console.error("Decoration load failed:", error);
@@ -782,8 +821,13 @@ const SOUND_LIGHT_API = `${API_BASE}/SoundLight`;
         hostOptionInput.appendChild(option);
       });
 
-      hostOptionInput.addEventListener("change", computePricing);
+      hostOptionInput.addEventListener("change", function () {
+        computePricing();
+        updateTableCount();
+      });
+
       computePricing();
+      updateTableCount();
 
     } catch (error) {
       console.error("Host load failed:", error);
@@ -862,8 +906,13 @@ const SOUND_LIGHT_API = `${API_BASE}/SoundLight`;
         soundLightOptionInput.appendChild(option);
       });
 
-      soundLightOptionInput.addEventListener("change", computePricing);
+      soundLightOptionInput.addEventListener("change", function () {
+        computePricing();
+        updateTableCount();
+      });
+
       computePricing();
+      updateTableCount();
 
     } catch (error) {
       console.error("Sound system load failed:", error);
@@ -916,13 +965,13 @@ const SOUND_LIGHT_API = `${API_BASE}/SoundLight`;
     }
 
     renderMenu();
-    handleMenuChoice();
+    handlePackageUI();
   }
 
   function getMenuScore(item) {
-    const requestText = (clientRequestInput.value || "").toLowerCase();
-    const searchText = (menuSearchInput.value || "").toLowerCase();
-    const eventTypeText = (eventTypeInput.value || "").toLowerCase();
+    const requestText = (clientRequestInput?.value || "").toLowerCase();
+    const searchText = (menuSearchInput?.value || "").toLowerCase();
+    const eventTypeText = (eventTypeInput?.value || "").toLowerCase();
     const tags = getCheckedTags();
 
     const bag = `${item.food_name} ${item.category} ${item.description}`.toLowerCase();
@@ -1080,7 +1129,7 @@ const SOUND_LIGHT_API = `${API_BASE}/SoundLight`;
           selectedPastas.length >= pastaLimit
         ) {
           showToast(
-            `Package 2 allows only 1 pasta choice. Choose either Spaghetti or Carbonara.`,
+            "Package 2 allows only 1 pasta choice. Choose either Spaghetti or Carbonara.",
             "warning",
             4000
           );
@@ -1138,7 +1187,9 @@ const SOUND_LIGHT_API = `${API_BASE}/SoundLight`;
     const selectedDesserts = getSelectedDesserts();
     const selectedPastas = getSelectedPastas();
 
-    if (isPackage1()) {
+    if (isPackage3()) {
+      selectedCountBadge.textContent = "No food selection needed";
+    } else if (isPackage1()) {
       selectedCountBadge.textContent =
         `${selectedFoodMenus.length}/${foodLimit} food • ${selectedDesserts.length}/${dessertLimit} dessert`;
     } else if (isPackage2()) {
@@ -1294,6 +1345,7 @@ const SOUND_LIGHT_API = `${API_BASE}/SoundLight`;
   renderSelectedFood();
   loadSelectedPackage();
   computePricing();
+  updateTableCount();
   handlePackageUI();
 
   packageNameInput.addEventListener("input", function () {
@@ -1307,11 +1359,20 @@ const SOUND_LIGHT_API = `${API_BASE}/SoundLight`;
   });
 
   [packagePriceInput, minimumPaxInput, expectedPaxInput].forEach(input => {
-    input.addEventListener("input", computePricing);
+    input.addEventListener("input", function () {
+      computePricing();
+      updateTableCount();
+    });
   });
 
   [clientRequestInput, menuSearchInput, eventTypeInput].forEach(input => {
-    input.addEventListener("input", renderMenu);
+    if (!input) return;
+
+    input.addEventListener("input", function () {
+      if (!isPackage3()) {
+        renderMenu();
+      }
+    });
   });
 
   if (menuChoiceInput) {
@@ -1319,7 +1380,11 @@ const SOUND_LIGHT_API = `${API_BASE}/SoundLight`;
   }
 
   document.querySelectorAll('input[name="diet"]').forEach(input => {
-    input.addEventListener("change", renderMenu);
+    input.addEventListener("change", function () {
+      if (!isPackage3()) {
+        renderMenu();
+      }
+    });
   });
 
   form.addEventListener("submit", async function (e) {
@@ -1368,20 +1433,12 @@ const SOUND_LIGHT_API = `${API_BASE}/SoundLight`;
 
       if (isPackage1()) {
         if (selectedFoodCount < 4 || selectedDessertCount < 1) {
-          showToast(
-            "Package 1 requires 4 food choices and 1 dessert.",
-            "warning",
-            4000
-          );
+          showToast("Package 1 requires 4 food choices and 1 dessert.", "warning", 4000);
           return;
         }
       } else if (isPackage2()) {
         if (selectedFoodCount < 5 || selectedPastaCount < 1 || selectedDessertCount < 1) {
-          showToast(
-            "Package 2 requires 5 food choices, 1 pasta, and 1 dessert.",
-            "warning",
-            4000
-          );
+          showToast("Package 2 requires 5 food choices, 1 pasta, and 1 dessert.", "warning", 4000);
           return;
         }
       } else {
@@ -1411,11 +1468,7 @@ const SOUND_LIGHT_API = `${API_BASE}/SoundLight`;
       foodLimit !== null &&
       getSelectedFoodMenus().length > foodLimit
     ) {
-      showToast(
-        `${isPackage2() ? "Package 2" : "Package 1"} allows up to ${foodLimit} food menu choices only.`,
-        "warning",
-        4000
-      );
+      showToast(`${isPackage2() ? "Package 2" : "Package 1"} allows up to ${foodLimit} food menu choices only.`, "warning", 4000);
       return;
     }
 
@@ -1425,11 +1478,7 @@ const SOUND_LIGHT_API = `${API_BASE}/SoundLight`;
       dessertLimit !== null &&
       getSelectedDesserts().length > dessertLimit
     ) {
-      showToast(
-        `${isPackage2() ? "Package 2" : "Package 1"} allows up to ${dessertLimit} dessert only.`,
-        "warning",
-        4000
-      );
+      showToast(`${isPackage2() ? "Package 2" : "Package 1"} allows up to ${dessertLimit} dessert only.`, "warning", 4000);
       return;
     }
 
@@ -1439,11 +1488,7 @@ const SOUND_LIGHT_API = `${API_BASE}/SoundLight`;
       pastaLimit !== null &&
       getSelectedPastas().length > pastaLimit
     ) {
-      showToast(
-        "Package 2 allows only 1 pasta choice. Choose either Spaghetti or Carbonara.",
-        "warning",
-        4000
-      );
+      showToast("Package 2 allows only 1 pasta choice. Choose either Spaghetti or Carbonara.", "warning", 4000);
       return;
     }
 
@@ -1512,7 +1557,7 @@ const SOUND_LIGHT_API = `${API_BASE}/SoundLight`;
       total_amount: pricing.totalAmount,
 
       client_request:
-        isPackageThree || menuChoiceInput.value !== "Customize"
+        isPackageThree || !menuChoiceInput || menuChoiceInput.value !== "Customize"
           ? ""
           : form.client_request.value.trim(),
 
@@ -1574,11 +1619,7 @@ const SOUND_LIGHT_API = `${API_BASE}/SoundLight`;
 
         if (!newReservationId) {
           console.error("Reservation was created but backend did not return reservation_id.", result);
-          showToast(
-            "Reservation created, but reservation ID was not returned. Please fix backend response.",
-            "error",
-            5000
-          );
+          showToast("Reservation created, but reservation ID was not returned. Please fix backend response.", "error", 5000);
           return;
         }
 
