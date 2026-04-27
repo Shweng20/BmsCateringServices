@@ -336,95 +336,105 @@ const SOUND_LIGHT_API = `${API_BASE}/SoundLight`;
   }
 
   function handleMenuChoice() {
-    if (!menuChoiceInput) return;
+  if (!menuChoiceInput) return;
 
-    const choice = menuChoiceInput.value;
+  const choice = menuChoiceInput.value;
 
-    const menuChoiceGroup = getMenuChoiceGroup();
-    const menuSection = document.querySelector(".menu-section");
-    const selectionBox = document.querySelector(".selection-box:not(#selectedSetPreview)");
-    const filterRow = document.querySelector(".filter-row");
-    const clientRequestGroup = clientRequestInput?.closest(".form-group");
+  const menuChoiceGroup =
+    menuChoiceInput.closest(".form-group") ||
+    menuChoiceInput.closest(".field") ||
+    menuChoiceInput.closest(".input-group") ||
+    menuChoiceInput.parentElement;
 
+  const menuSection = document.querySelector(".menu-section");
+  const selectionBox = document.querySelector(".selection-box:not(#selectedSetPreview)");
+  const filterRow = document.querySelector(".filter-row");
+  const clientRequestGroup = clientRequestInput?.closest(".form-group");
+
+  // PACKAGE 3: no menu selection needed
+  if (isPackage3()) {
     selectedMenus.clear();
 
-    if (isPackage3()) {
-      if (menuChoiceGroup) menuChoiceGroup.classList.add("hidden");
-      if (selectedSetPreview) selectedSetPreview.classList.add("hidden");
-      if (menuSection) menuSection.classList.add("hidden");
-      if (selectionBox) selectionBox.classList.add("hidden");
-      if (filterRow) filterRow.classList.add("hidden");
-      if (clientRequestGroup) clientRequestGroup.classList.add("hidden");
+    if (menuChoiceInput) menuChoiceInput.value = "";
 
-      menuChoiceInput.value = "";
-      renderSelectedFood();
-      return;
-    }
-
-    if (menuChoiceGroup) menuChoiceGroup.classList.remove("hidden");
-
-    if (choice === "Customize") {
-      if (selectedSetPreview) selectedSetPreview.classList.add("hidden");
-
-      if (menuSection) menuSection.classList.remove("hidden");
-      if (selectionBox) selectionBox.classList.remove("hidden");
-      if (filterRow) filterRow.classList.remove("hidden");
-      if (clientRequestGroup) clientRequestGroup.classList.remove("hidden");
-
-      updatePastaChoiceVisibility();
-      renderMenu();
-      renderSelectedFood();
-      return;
-    }
-
-    if (["Buffet A", "Buffet B", "Buffet C", "Buffet D"].includes(choice)) {
-      const setMenus = getMenusByBuffetSet(choice);
-
-      if (menuSection) menuSection.classList.add("hidden");
-      if (selectionBox) selectionBox.classList.add("hidden");
-      if (filterRow) filterRow.classList.add("hidden");
-      if (clientRequestGroup) clientRequestGroup.classList.add("hidden");
-
-      if (selectedSetPreview) selectedSetPreview.classList.remove("hidden");
-      if (selectedSetBadge) selectedSetBadge.textContent = choice.replace("Buffet", "Set");
-
-      if (selectedSetList) {
-        if (setMenus.length === 0) {
-          selectedSetList.className = "selected-food-list empty-state";
-          selectedSetList.textContent = `No menu found for ${choice}. Check Menu.category in database.`;
-        } else {
-          selectedSetList.className = "selected-food-list";
-          selectedSetList.innerHTML = setMenus.map(item => `
-            <div class="selected-food-item">
-              <div>
-                <strong>${escapeHtml(item.food_name)}</strong>
-                <span>${escapeHtml(item.category || item.description || "Menu")}</span>
-              </div>
-              <span class="count-badge">Included</span>
-            </div>
-          `).join("");
-        }
-      }
-
-      renderSelectedFood();
-      return;
-    }
-
-    if (selectedSetPreview) selectedSetPreview.classList.remove("hidden");
-    if (selectedSetBadge) selectedSetBadge.textContent = "No set selected";
-
-    if (selectedSetList) {
-      selectedSetList.className = "selected-food-list empty-state";
-      selectedSetList.textContent = "Please choose Set A, B, C, D, or Customize.";
-    }
-
+    if (menuChoiceGroup) menuChoiceGroup.classList.add("hidden");
+    if (selectedSetPreview) selectedSetPreview.classList.add("hidden");
     if (menuSection) menuSection.classList.add("hidden");
     if (selectionBox) selectionBox.classList.add("hidden");
     if (filterRow) filterRow.classList.add("hidden");
     if (clientRequestGroup) clientRequestGroup.classList.add("hidden");
 
     renderSelectedFood();
+    return;
   }
+
+  // PACKAGE 1 AND 2
+  if (menuChoiceGroup) menuChoiceGroup.classList.remove("hidden");
+
+  selectedMenus.clear();
+
+  if (choice === "Customize") {
+    if (selectedSetPreview) selectedSetPreview.classList.add("hidden");
+
+    if (menuSection) menuSection.classList.remove("hidden");
+    if (selectionBox) selectionBox.classList.remove("hidden");
+    if (filterRow) filterRow.classList.remove("hidden");
+    if (clientRequestGroup) clientRequestGroup.classList.remove("hidden");
+
+    updatePastaChoiceVisibility();
+    renderMenu();
+    renderSelectedFood();
+    return;
+  }
+
+  if (["Buffet A", "Buffet B", "Buffet C", "Buffet D"].includes(choice)) {
+    const setMenus = getMenusByBuffetSet(choice);
+
+    if (menuSection) menuSection.classList.add("hidden");
+    if (selectionBox) selectionBox.classList.add("hidden");
+    if (filterRow) filterRow.classList.add("hidden");
+    if (clientRequestGroup) clientRequestGroup.classList.add("hidden");
+
+    if (selectedSetPreview) selectedSetPreview.classList.remove("hidden");
+    if (selectedSetBadge) selectedSetBadge.textContent = choice.replace("Buffet", "Set");
+
+    if (selectedSetList) {
+      if (setMenus.length === 0) {
+        selectedSetList.className = "selected-food-list empty-state";
+        selectedSetList.textContent = `No menu found for ${choice}. Check Menu.category in database.`;
+      } else {
+        selectedSetList.className = "selected-food-list";
+        selectedSetList.innerHTML = setMenus.map(item => `
+          <div class="selected-food-item">
+            <div>
+              <strong>${escapeHtml(item.food_name)}</strong>
+              <span>${escapeHtml(item.category || item.description || "Menu")}</span>
+            </div>
+            <span class="count-badge">Included</span>
+          </div>
+        `).join("");
+      }
+    }
+
+    renderSelectedFood();
+    return;
+  }
+
+  if (selectedSetPreview) selectedSetPreview.classList.remove("hidden");
+  if (selectedSetBadge) selectedSetBadge.textContent = "No set selected";
+
+  if (selectedSetList) {
+    selectedSetList.className = "selected-food-list empty-state";
+    selectedSetList.textContent = "Please choose Set A, B, C, D, or Customize.";
+  }
+
+  if (menuSection) menuSection.classList.add("hidden");
+  if (selectionBox) selectionBox.classList.add("hidden");
+  if (filterRow) filterRow.classList.add("hidden");
+  if (clientRequestGroup) clientRequestGroup.classList.add("hidden");
+
+  renderSelectedFood();
+}
 
   function applyPackagePrice() {
     const packageName = packageNameInput.value.trim().toLowerCase();
