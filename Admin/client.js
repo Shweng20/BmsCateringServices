@@ -61,7 +61,9 @@ function setupLogout() {
   }
 }
 
-const API_URL = "https://localhost:7241/api/Report/user-reservation-dashboard";
+/* AZURE BACKEND URL */
+const API_BASE = "https://bmscatering-api.azurewebsites.net";
+const API_URL = `${API_BASE}/api/Report/user-reservation-dashboard`;
 
 const tableBody = document.getElementById("clientTableBody");
 const searchInput = document.getElementById("clientSearch");
@@ -71,7 +73,6 @@ let clientData = [];
 document.addEventListener("DOMContentLoaded", () => {
   setAdminProfile();
   setupLogout();
-
   loadClientDashboard();
 
   if (searchInput) {
@@ -80,11 +81,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const filteredData = clientData.filter(item => {
         const fullName = getValue(item, "full_name", "fullName");
-        const email = getValue(item, "email", "email");
+        const email = getValue(item, "email", "Email");
 
         return (
-          fullName.toLowerCase().includes(searchValue) ||
-          email.toLowerCase().includes(searchValue)
+          String(fullName).toLowerCase().includes(searchValue) ||
+          String(email).toLowerCase().includes(searchValue)
         );
       });
 
@@ -95,29 +96,66 @@ document.addEventListener("DOMContentLoaded", () => {
 
 async function loadClientDashboard() {
   try {
-    const response = await fetch(API_URL);
+    if (!tableBody) {
+      console.error("Table body with ID 'clientTableBody' was not found.");
+      return;
+    }
+
+    tableBody.innerHTML = `
+      <tr>
+        <td colspan="8" class="empty-state">Loading client records...</td>
+      </tr>
+    `;
+
+    const response = await fetch(API_URL, {
+      method: "GET",
+      headers: {
+        "Accept": "application/json"
+      }
+    });
 
     if (!response.ok) {
       throw new Error(`HTTP Error: ${response.status}`);
     }
 
-    clientData = await response.json();
+    const result = await response.json();
+
+    /*
+      Supports both response formats:
+      1. Direct array:
+         [ { ... }, { ... } ]
+
+      2. Wrapped response:
+         { success: true, data: [ ... ] }
+    */
+    if (Array.isArray(result)) {
+      clientData = result;
+    } else if (Array.isArray(result.data)) {
+      clientData = result.data;
+    } else {
+      clientData = [];
+    }
+
     renderTable(clientData);
 
   } catch (error) {
     console.error("Failed to load client dashboard:", error);
 
-    tableBody.innerHTML = `
-      <tr>
-        <td colspan="8" class="empty-state">
-          Failed to load data. Check if API is running.
-        </td>
-      </tr>
-    `;
+    if (tableBody) {
+      tableBody.innerHTML = `
+        <tr>
+          <td colspan="8" class="empty-state">
+            Failed to load data. Check if API is running or CORS is enabled.
+          </td>
+        </tr>
+      `;
+    }
   }
 }
 
 function renderTable(data) {
+  if (!tableBody) return;
+
   if (!data || data.length === 0) {
     tableBody.innerHTML = `
       <tr>
@@ -128,14 +166,14 @@ function renderTable(data) {
   }
 
   tableBody.innerHTML = data.map(item => {
-    const clientId = getValue(item, "client_id", "clientId");
-    const fullName = getValue(item, "full_name", "fullName");
-    const email = getValue(item, "email", "email");
-    const registrationDate = getValue(item, "registration_date", "registrationDate");
-    const totalReservations = getValue(item, "total_reservations", "totalReservations");
-    const totalSpent = getValue(item, "total_spent", "totalSpent");
-    const avgSpending = getValue(item, "avg_spending", "avgSpending");
-    const latestEvent = getValue(item, "latest_event", "latestEvent");
+    const clientId = getValue(item, "client_id", "clientId", "ClientId", "ClientID");
+    const fullName = getValue(item, "full_name", "fullName", "FullName", "name", "Name");
+    const email = getValue(item, "email", "Email");
+    const registrationDate = getValue(item, "registration_date", "registrationDate", "RegistrationDate");
+    const totalReservations = getValue(item, "total_reservations", "totalReservations", "TotalReservations");
+    const totalSpent = getValue(item, "total_spent", "totalSpent", "TotalSpent");
+    const avgSpending = getValue(item, "avg_spending", "avgSpending", "AvgSpending");
+    const latestEvent = getValue(item, "latest_event", "latestEvent", "LatestEvent");
 
     return `
       <tr>
@@ -152,15 +190,24 @@ function renderTable(data) {
   }).join("");
 }
 
-function getValue(item, snakeKey, camelKey) {
-  return item[snakeKey] ?? item[camelKey] ?? "";
+function getValue(item, ...keys) {
+  for (const key of keys) {
+    if (item && item[key] !== undefined && item[key] !== null) {
+      return item[key];
+    }
+  }
+
+  return "";
 }
 
 function formatDateTime(value) {
   if (!value) return "";
 
   const date = new Date(value);
-  if (isNaN(date.getTime())) return escapeHTML(value);
+
+  if (isNaN(date.getTime())) {
+    return escapeHTML(value);
+  }
 
   return date.toLocaleString("en-PH", {
     year: "numeric",
@@ -174,7 +221,9 @@ function formatDateTime(value) {
 function formatCurrency(value) {
   const num = Number(value);
 
-  if (isNaN(num)) return "₱0.00";
+  if (isNaN(num)) {
+    return "₱0.00";
+  }
 
   return num.toLocaleString("en-PH", {
     style: "currency",
@@ -183,7 +232,7 @@ function formatCurrency(value) {
 }
 
 function escapeHTML(value) {
-  return String(value)
+  return String(value ?? "")
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")

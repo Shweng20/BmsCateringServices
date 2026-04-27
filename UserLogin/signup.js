@@ -1,8 +1,14 @@
-const API_BASE_URL = "https://localhost:7241/api";
+const API_BASE_URL = "https://bmscatering-api.azurewebsites.net/api";
 
 async function parseJsonOrText(response) {
   const rawText = await response.text();
   console.log("Raw response:", rawText);
+
+  if (!rawText) {
+    return {
+      message: "Empty server response."
+    };
+  }
 
   try {
     return JSON.parse(rawText);

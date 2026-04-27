@@ -47,9 +47,8 @@ function setAdminProfile() {
   });
 }
 
-const API_BASE = "https://localhost:7241";
+const API_BASE = "https://bmscatering-api.azurewebsites.net";
 const DASHBOARD_ENDPOINT = `${API_BASE}/api/AdminDashboard`;
-const REPORT_API = `${API_BASE}/api/Report`;
 
 let reservations = [];
 let filteredReservations = [];
@@ -60,11 +59,6 @@ const pendingReservationsEl = document.getElementById("pendingReservations");
 const approvedReservationsEl = document.getElementById("approvedReservations");
 const cancelledReservationsEl = document.getElementById("cancelledReservations");
 const totalRevenueEl = document.getElementById("totalRevenue");
-
-const minPaxEl = document.getElementById("minPax");
-const maxPaxEl = document.getElementById("maxPax");
-const filterPackagesBody = document.getElementById("filterPackagesBody");
-const countHostBody = document.getElementById("countHostBody");
 
 const reservationTableBody = document.getElementById("reservationTableBody");
 const searchInput = document.getElementById("searchInput");
@@ -79,32 +73,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   setAdminProfile();
   setupLogout();
   bindEvents();
-  await initialLoad();
-});
 
-async function initialLoad() {
   const success = await loadReservations(true);
-  await loadReservationReports();
 
   if (success) {
     startAutoRefresh();
   }
-}
-
-async function fetchJson(url) {
-  const response = await fetch(url, {
-    method: "GET",
-    headers: {
-      Accept: "application/json"
-    }
-  });
-
-  if (!response.ok) {
-    throw new Error(`HTTP Error: ${response.status}`);
-  }
-
-  return await response.json();
-}
+});
 
 function setupLogout() {
   if (!logoutBtn) return;
@@ -189,140 +164,11 @@ async function loadReservations(showLoading = true) {
   }
 }
 
-async function loadReservationReports() {
-  try {
-    const [minMaxPax, filterPackages, countHost] = await Promise.all([
-      fetchJson(`${REPORT_API}/min-max-pax`),
-      fetchJson(`${REPORT_API}/filter-packages`),
-      fetchJson(`${REPORT_API}/count-host-assigned-reservation`)
-    ]);
-
-    renderMinMaxPax(minMaxPax);
-    renderFilterPackages(filterPackages);
-    renderCountHostAssignedReservation(countHost);
-
-  } catch (error) {
-    console.error("Reservation reports error:", error);
-
-    if (filterPackagesBody) {
-      filterPackagesBody.innerHTML = `
-        <tr>
-          <td colspan="2" class="empty-state">Failed to load filtered packages.</td>
-        </tr>
-      `;
-    }
-
-    if (countHostBody) {
-      countHostBody.innerHTML = `
-        <tr>
-          <td colspan="2" class="empty-state">Failed to load host count report.</td>
-        </tr>
-      `;
-    }
-  }
-}
-
-function renderMinMaxPax(data) {
-  const minPax =
-    data?.min_pax ??
-    data?.minPax ??
-    data?.MinPax ??
-    data?.Min_Pax ??
-    0;
-
-  const maxPax =
-    data?.max_pax ??
-    data?.maxPax ??
-    data?.MaxPax ??
-    data?.Max_Pax ??
-    0;
-
-  if (minPaxEl) minPaxEl.textContent = minPax;
-  if (maxPaxEl) maxPaxEl.textContent = maxPax;
-}
-
-function renderFilterPackages(data) {
-  if (!filterPackagesBody) return;
-
-  const rows = Array.isArray(data) ? data : [];
-
-  if (rows.length === 0) {
-    filterPackagesBody.innerHTML = `
-      <tr>
-        <td colspan="2" class="empty-state">No reservations found within 100–300 pax.</td>
-      </tr>
-    `;
-    return;
-  }
-
-  filterPackagesBody.innerHTML = rows.map(item => {
-    const reservationId =
-      item.reservation_id ??
-      item.reservationId ??
-      item.ReservationId ??
-      item.Reservation_ID ??
-      "";
-
-    const totalPax =
-      item.total_pax ??
-      item.totalPax ??
-      item.TotalPax ??
-      item.Total_Pax ??
-      0;
-
-    return `
-      <tr>
-        <td>#${escapeHtml(reservationId)}</td>
-        <td>${escapeHtml(totalPax)}</td>
-      </tr>
-    `;
-  }).join("");
-}
-
-function renderCountHostAssignedReservation(data) {
-  if (!countHostBody) return;
-
-  const rows = Array.isArray(data) ? data : [];
-
-  if (rows.length === 0) {
-    countHostBody.innerHTML = `
-      <tr>
-        <td colspan="2" class="empty-state">No reservations with multiple hosts found.</td>
-      </tr>
-    `;
-    return;
-  }
-
-  countHostBody.innerHTML = rows.map(item => {
-    const reservationId =
-      item.reservation_id ??
-      item.reservationId ??
-      item.ReservationId ??
-      item.Reservation_ID ??
-      "";
-
-    const hostCount =
-      item.host_count ??
-      item.hostCount ??
-      item.HostCount ??
-      item.Host_Count ??
-      0;
-
-    return `
-      <tr>
-        <td>#${escapeHtml(reservationId)}</td>
-        <td>${escapeHtml(hostCount)}</td>
-      </tr>
-    `;
-  }).join("");
-}
-
 function startAutoRefresh() {
   stopAutoRefresh();
 
   refreshTimer = setInterval(async () => {
     await loadReservations(false);
-    await loadReservationReports();
   }, 5000);
 }
 
@@ -335,15 +181,125 @@ function stopAutoRefresh() {
 
 function normalizeReservation(item) {
   return {
-    reservation_id: item.reservation_id ?? item.reservationId ?? 0,
-    full_name: item.full_name ?? item.fullName ?? "N/A",
-    event_type: item.event_type ?? item.eventType ?? "N/A",
-    event_date: item.event_date ?? item.eventDate ?? "",
-    venue: item.venue ?? "N/A",
-    total_amount: Number(item.total_amount ?? item.totalAmount ?? 0),
+    reservation_id:
+      item.reservation_id ??
+      item.reservationId ??
+      item.ReservationId ??
+      0,
+
+    client_id:
+      item.client_id ??
+      item.clientId ??
+      item.ClientId ??
+      "—",
+
+    full_name:
+      item.full_name ??
+      item.fullName ??
+      item.client_name ??
+      item.clientName ??
+      item.ClientName ??
+      "N/A",
+
+    event_type:
+      item.event_type ??
+      item.eventType ??
+      item.EventType ??
+      "N/A",
+
+    event_date:
+      item.event_date ??
+      item.eventDate ??
+      item.EventDate ??
+      "",
+
+    event_time:
+      item.event_time ??
+      item.eventTime ??
+      item.EventTime ??
+      "—",
+
+    venue:
+      item.venue ??
+      item.Venue ??
+      "N/A",
+
     reservation_status: normalizeStatus(
-      item.reservation_status ?? item.reservationStatus
-    )
+      item.reservation_status ??
+      item.reservationStatus ??
+      item.ReservationStatus
+    ),
+
+    reservation_date:
+      item.reservation_date ??
+      item.reservationDate ??
+      item.ReservationDate ??
+      "",
+
+    total_amount: Number(
+      item.total_amount ??
+      item.totalAmount ??
+      item.TotalAmount ??
+      0
+    ),
+
+    package_name:
+      item.package_name ??
+      item.packageName ??
+      item.PackageName ??
+      "—",
+
+    selected_food:
+      item.selected_food ??
+      item.selectedFood ??
+      item.SelectedFood ??
+      "—",
+
+    sound_light_option:
+      item.sound_light_option ??
+      item.soundLightOption ??
+      item.service_name ??
+      item.serviceName ??
+      "—",
+
+    host_option:
+      item.host_option ??
+      item.hostOption ??
+      item.host_name ??
+      item.hostName ??
+      "—",
+
+    host_specialization:
+      item.host_specialization ??
+      item.hostSpecialization ??
+      item.specialization ??
+      "—",
+
+    host_price: Number(
+      item.host_price ??
+      item.hostPrice ??
+      item.professional_fee ??
+      item.professionalFee ??
+      0
+    ),
+
+    payment_method:
+      item.payment_method ??
+      item.paymentMethod ??
+      item.PaymentMethod ??
+      "—",
+
+    transaction_status:
+      item.transaction_status ??
+      item.transactionStatus ??
+      item.TransactionStatus ??
+      "—",
+
+    proof_of_payment:
+      item.proof_of_payment ??
+      item.proofOfPayment ??
+      item.ProofOfPayment ??
+      ""
   };
 }
 
@@ -354,6 +310,7 @@ function normalizeStatus(status) {
 
   if (value === "approved") return "Approved";
   if (value === "cancelled" || value === "canceled") return "Cancelled";
+
   return "Pending";
 }
 
@@ -380,9 +337,10 @@ function applyFilters() {
 
   filteredReservations = reservations.filter(item => {
     const matchesSearch =
-      item.full_name.toLowerCase().includes(searchValue) ||
-      item.event_type.toLowerCase().includes(searchValue) ||
-      item.venue.toLowerCase().includes(searchValue) ||
+      String(item.full_name).toLowerCase().includes(searchValue) ||
+      String(item.event_type).toLowerCase().includes(searchValue) ||
+      String(item.venue).toLowerCase().includes(searchValue) ||
+      String(item.selected_food).toLowerCase().includes(searchValue) ||
       String(item.reservation_id).includes(searchValue);
 
     const matchesStatus =
@@ -451,6 +409,21 @@ function bindTableActions() {
   });
 }
 
+function getHostDisplay(reservation) {
+  if (!reservation.host_option || reservation.host_option === "—") {
+    return "—";
+  }
+
+  if (
+    reservation.host_specialization &&
+    reservation.host_specialization !== "—"
+  ) {
+    return `${reservation.host_option} - ${reservation.host_specialization}`;
+  }
+
+  return reservation.host_option;
+}
+
 function viewDetails(id) {
   const reservation = reservations.find(item => item.reservation_id === id);
 
@@ -461,11 +434,20 @@ function viewDetails(id) {
 
   if (!modalBody || !detailsModal) return;
 
+  const downpayment = Number(reservation.total_amount || 0) * 0.7;
+  const remainingBalance = Number(reservation.total_amount || 0) * 0.3;
+  const hostDisplay = getHostDisplay(reservation);
+
   modalBody.innerHTML = `
     <div class="detail-grid">
       <div class="detail-item">
         <span>Reservation ID</span>
         <strong>#${escapeHtml(reservation.reservation_id)}</strong>
+      </div>
+
+      <div class="detail-item">
+        <span>Client ID</span>
+        <strong>${escapeHtml(reservation.client_id)}</strong>
       </div>
 
       <div class="detail-item">
@@ -484,6 +466,11 @@ function viewDetails(id) {
       </div>
 
       <div class="detail-item">
+        <span>Event Time</span>
+        <strong>${escapeHtml(formatTime(reservation.event_time))}</strong>
+      </div>
+
+      <div class="detail-item">
         <span>Venue</span>
         <strong>${escapeHtml(reservation.venue)}</strong>
       </div>
@@ -493,10 +480,80 @@ function viewDetails(id) {
         <strong>${escapeHtml(reservation.reservation_status)}</strong>
       </div>
 
+      <div class="detail-item">
+        <span>Package</span>
+        <strong>${escapeHtml(reservation.package_name)}</strong>
+      </div>
+
+      <div class="detail-item span-full">
+        <span>Selected Food</span>
+        <strong>${escapeHtml(reservation.selected_food)}</strong>
+      </div>
+
+      <div class="detail-item">
+        <span>Sound & Light</span>
+        <strong>${escapeHtml(reservation.sound_light_option)}</strong>
+      </div>
+
+      <div class="detail-item">
+        <span>Host</span>
+        <strong>${escapeHtml(hostDisplay)}</strong>
+      </div>
+
+      <div class="detail-item">
+        <span>Host Fee</span>
+        <strong>${reservation.host_price > 0 ? formatCurrency(reservation.host_price) : "—"}</strong>
+      </div>
+
+      <div class="detail-item">
+        <span>Payment Method</span>
+        <strong>${escapeHtml(reservation.payment_method)}</strong>
+      </div>
+
+      <div class="detail-item">
+        <span>Payment Status</span>
+        <strong>${escapeHtml(reservation.transaction_status)}</strong>
+      </div>
+
+      <div class="detail-item">
+        <span>Reservation Date</span>
+        <strong>${formatDate(reservation.reservation_date)}</strong>
+      </div>
+
       <div class="detail-item span-full">
         <span>Total Amount</span>
         <strong>${formatCurrency(reservation.total_amount)}</strong>
       </div>
+
+      <div class="detail-item">
+        <span>70% Downpayment</span>
+        <strong>${formatCurrency(downpayment)}</strong>
+      </div>
+
+      <div class="detail-item">
+        <span>30% Balance</span>
+        <strong>${formatCurrency(remainingBalance)}</strong>
+      </div>
+
+      ${
+        reservation.proof_of_payment
+          ? `
+            <div class="detail-item span-full">
+              <span>Proof of Payment</span>
+              <strong>
+                <a href="${API_BASE}${escapeHtml(reservation.proof_of_payment)}" target="_blank">
+                  View uploaded proof
+                </a>
+              </strong>
+            </div>
+          `
+          : `
+            <div class="detail-item span-full">
+              <span>Proof of Payment</span>
+              <strong>No proof uploaded</strong>
+            </div>
+          `
+      }
     </div>
   `;
 
@@ -532,12 +589,13 @@ function renderTableError(message) {
 function formatCurrency(amount) {
   return new Intl.NumberFormat("en-PH", {
     style: "currency",
-    currency: "PHP"
+    currency: "PHP",
+    minimumFractionDigits: 2
   }).format(Number(amount || 0));
 }
 
 function formatDate(dateString) {
-  if (!dateString) return "N/A";
+  if (!dateString || dateString === "—") return "—";
 
   const date = new Date(dateString);
 
@@ -550,6 +608,22 @@ function formatDate(dateString) {
     month: "short",
     day: "numeric"
   });
+}
+
+function formatTime(timeValue) {
+  if (!timeValue || timeValue === "—") return "—";
+
+  const raw = String(timeValue);
+
+  if (/^\d{2}:\d{2}:\d{2}$/.test(raw)) {
+    return raw;
+  }
+
+  if (/^\d{2}:\d{2}$/.test(raw)) {
+    return `${raw}:00`;
+  }
+
+  return raw;
 }
 
 function escapeHtml(value) {

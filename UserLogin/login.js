@@ -1,4 +1,4 @@
-const API_BASE_URL = "https://localhost:7241/api";
+const API_BASE_URL = "https://bmscatering-api.azurewebsites.net/api";
 
 async function parseJsonSafe(response) {
   const rawText = await response.text();
@@ -13,7 +13,8 @@ async function parseJsonSafe(response) {
   } catch (error) {
     console.error("JSON parse error:", error);
     return {
-      message: "Unexpected server response.",
+      success: false,
+      message: rawText || "Unexpected server response.",
       raw: rawText
     };
   }
@@ -46,23 +47,6 @@ document.addEventListener("DOMContentLoaded", function () {
     element.style.color = isSuccess ? "green" : "red";
   }
 
-  async function parseJsonSafe(response) {
-    const rawText = await response.text();
-    console.log("Raw response:", rawText);
-
-    try {
-      return JSON.parse(rawText);
-    } catch (error) {
-      return {
-        success: false,
-        message: rawText || "Invalid server response."
-      };
-    }
-  }
-
-  // =========================
-  // TOGGLE PASSWORD
-  // =========================
   document.querySelectorAll(".toggle-password").forEach(button => {
     button.addEventListener("click", function () {
       const targetId = this.getAttribute("data-target");
@@ -80,74 +64,68 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 
-  // =========================
-  // LOGIN
-  // =========================
   if (loginForm) {
-  loginForm.addEventListener("submit", async function (e) {
-    e.preventDefault();
+    loginForm.addEventListener("submit", async function (e) {
+      e.preventDefault();
 
-    const email = emailInput?.value.trim();
-    const password = passwordInput?.value.trim();
+      const email = emailInput?.value.trim();
+      const password = passwordInput?.value.trim();
 
-    showMessage(loginMessage, "");
+      showMessage(loginMessage, "");
 
-    if (!email || !password) {
-      showMessage(loginMessage, "Please enter your email and password.");
-      return;
-    }
-
-    try {
-      const response = await fetch("https://localhost:7241/api/Client/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          email: email,
-          password: password
-        })
-      });
-
-      const result = await parseJsonSafe(response);
-
-      if (!response.ok) {
-        showMessage(loginMessage, result.message || "Login failed.");
-        console.error("Login failed:", result);
+      if (!email || !password) {
+        showMessage(loginMessage, "Please enter your email and password.");
         return;
       }
 
-      if (!result.success) {
-        if (result.requiresVerification) {
-          showMessage(loginMessage, result.message || "Account requires verification.");
+      try {
+        const response = await fetch(`${API_BASE_URL}/Client/login`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            email: email,
+            password: password
+          })
+        });
+
+        const result = await parseJsonSafe(response);
+
+        if (!response.ok) {
+          showMessage(loginMessage, result.message || "Login failed.");
+          console.error("Login failed:", result);
           return;
         }
 
-        showMessage(loginMessage, result.message || "Login failed.");
-        return;
+        if (!result.success) {
+          if (result.requiresVerification) {
+            showMessage(loginMessage, result.message || "Account requires verification.");
+            return;
+          }
+
+          showMessage(loginMessage, result.message || "Login failed.");
+          return;
+        }
+
+        if (result.client) {
+          localStorage.setItem("clientUser", JSON.stringify(result.client));
+          localStorage.setItem("clientId", result.client.client_id);
+        }
+
+        showMessage(loginMessage, result.message || "Login successful.", true);
+
+        setTimeout(() => {
+          window.location.href = "../index.html";
+        }, 1000);
+
+      } catch (error) {
+        console.error("Fetch/Login error:", error);
+        showMessage(loginMessage, "Unable to connect to the server.");
       }
+    });
+  }
 
-      if (result.client) {
-        localStorage.setItem("clientUser", JSON.stringify(result.client));
-        localStorage.setItem("clientId", result.client.client_id);
-      }
-
-      showMessage(loginMessage, result.message || "Login successful.", true);
-
-      setTimeout(() => {
-        window.location.href = "../index.html";
-      }, 1000);
-
-    } catch (error) {
-      console.error("Fetch/Login error:", error);
-      showMessage(loginMessage, "Unable to connect to the server.");
-    }
-  });
-}
-
-  // =========================
-  // OPEN/CLOSE FORGOT MODAL
-  // =========================
   if (openForgotModalBtn && forgotPasswordModal) {
     openForgotModalBtn.addEventListener("click", function () {
       forgotPasswordModal.classList.add("show");
@@ -166,9 +144,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  // =========================
-  // FORGOT PASSWORD
-  // =========================
   if (forgotPasswordForm) {
     forgotPasswordForm.addEventListener("submit", async function (e) {
       e.preventDefault();
@@ -182,7 +157,7 @@ document.addEventListener("DOMContentLoaded", function () {
       }
 
       try {
-        const response = await fetch("https://localhost:7241/api/Client/forgot-password", {
+        const response = await fetch(`${API_BASE_URL}/Client/forgot-password`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
@@ -211,9 +186,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // =========================
-  // RESET PASSWORD
-  // =========================
   if (resetPasswordForm) {
     resetPasswordForm.addEventListener("submit", async function (e) {
       e.preventDefault();
@@ -236,7 +208,7 @@ document.addEventListener("DOMContentLoaded", function () {
       }
 
       try {
-        const response = await fetch("https://localhost:7241/api/Client/reset-password", {
+        const response = await fetch(`${API_BASE_URL}/Client/reset-password`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
@@ -263,9 +235,15 @@ document.addEventListener("DOMContentLoaded", function () {
         showMessage(resetMessage, result.message || "Password reset successful.", true);
 
         setTimeout(() => {
-          forgotPasswordModal.classList.remove("show");
+          if (forgotPasswordModal) {
+            forgotPasswordModal.classList.remove("show");
+          }
+
           resetPasswordForm.reset();
-          forgotPasswordForm.reset();
+
+          if (forgotPasswordForm) {
+            forgotPasswordForm.reset();
+          }
         }, 1200);
 
       } catch (error) {

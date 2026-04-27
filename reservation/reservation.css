@@ -316,6 +316,27 @@ button, input, textarea, select, a {
   padding: 28px;
 }
 
+.calendar-past-date {
+  background: #f1f5f9 !important;
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.calendar-past-date .fc-daygrid-day-number {
+  color: #94a3b8 !important;
+}
+
+.fc-event {
+  cursor: not-allowed;
+  font-weight: 700;
+}
+
+.fc-day-selected {
+  background: rgba(26, 163, 154, 0.16) !important;
+  outline: 2px solid #1aa39a;
+  outline-offset: -2px;
+}
+
 .booking-form {
   padding: 28px;
   border-top: 5px solid var(--accent);

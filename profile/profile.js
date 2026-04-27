@@ -1,4 +1,4 @@
-const API_BASE_URL = "https://localhost:7241/api";
+const API_BASE_URL = "https://bmscatering-api.azurewebsites.net/api";
 const LOGIN_PAGE = "../UserLogin/login.html";
 
 let currentClient = null;
@@ -86,7 +86,6 @@ async function loadProfile() {
   }
 }
 
-/* TOGGLE PASSWORD */
 document.querySelectorAll(".toggle-password").forEach(button => {
   button.addEventListener("click", function () {
     const targetId = this.getAttribute("data-target");
@@ -99,16 +98,13 @@ document.querySelectorAll(".toggle-password").forEach(button => {
   });
 });
 
-/* LOGOUT */
 document.getElementById("logoutBtn").addEventListener("click", function () {
   localStorage.removeItem("clientUser");
   window.location.href = LOGIN_PAGE;
 });
 
-/* REFRESH */
 document.getElementById("refreshBtn").addEventListener("click", loadProfile);
 
-/* UPDATE PROFILE */
 document.getElementById("profileForm").addEventListener("submit", async function (e) {
   e.preventDefault();
 
@@ -158,11 +154,6 @@ document.getElementById("profileForm").addEventListener("submit", async function
   }
 });
 
-/* =========================
-   🔥 PASSWORD CHANGE FIXED
-   ========================= */
-
-/* REQUEST CODE */
 document.getElementById("requestPasswordChangeForm").addEventListener("submit", async function (e) {
   e.preventDefault();
 
@@ -220,7 +211,6 @@ document.getElementById("requestPasswordChangeForm").addEventListener("submit", 
   }
 });
 
-/* CONFIRM PASSWORD */
 document.getElementById("confirmPasswordChangeForm").addEventListener("submit", async function (e) {
   e.preventDefault();
 

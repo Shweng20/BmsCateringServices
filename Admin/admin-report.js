@@ -62,7 +62,7 @@ function setupLogout() {
   }
 }
 
-const API_BASE = "https://localhost:7241";
+const API_BASE = "https://bmscatering-api.azurewebsites.net";
 const REPORT_API = `${API_BASE}/api/Report`;
 
 const TRANSACTION_SUMMARY_URL = `${REPORT_API}/transaction-summary-report`;

@@ -1,4 +1,4 @@
-const API_BASE_URL = "https://localhost:7241/api";
+const API_BASE_URL = "https://bmscatering-api.azurewebsites.net";
 
 async function parseJsonSafe(response) {
   try {

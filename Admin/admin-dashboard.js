@@ -60,7 +60,7 @@ function setupLogout() {
   }
 }
 
-const API_BASE = "https://localhost:7241";
+const API_BASE = "https://bmscatering-api.azurewebsites.net/swagger";
 const DASHBOARD_ENDPOINT = `${API_BASE}/api/AdminDashboard`;
 const REPORT_API = `${API_BASE}/api/Report`;
 

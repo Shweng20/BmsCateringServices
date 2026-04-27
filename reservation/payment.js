@@ -1,6 +1,11 @@
 document.addEventListener("DOMContentLoaded", function () {
-  const API_BASE_URL = "https://localhost:7241";
-  const PAYMENT_API = `${API_BASE_URL}/TransactionLog`;
+  const API_BASE_URL = "https://bmscatering-api.azurewebsites.net";
+
+  const UPLOAD_PROOF_API = `${API_BASE_URL}/TransactionLog/upload-proof`;
+  const RESERVATION_API = `${API_BASE_URL}/Reservation`;
+
+  const DOWNPAYMENT_RATE = 0.70;
+  const BALANCE_RATE = 0.30;
 
   const pendingPaymentRaw = localStorage.getItem("pendingPayment");
   const clientRaw = localStorage.getItem("clientUser");
@@ -8,6 +13,8 @@ document.addEventListener("DOMContentLoaded", function () {
   const paymentForm = document.getElementById("paymentForm");
   const paymentMessage = document.getElementById("paymentMessage");
   const paymentTotal = document.getElementById("paymentTotal");
+  const downpaymentAmount = document.getElementById("downpaymentAmount");
+  const remainingBalance = document.getElementById("remainingBalance");
 
   const reservationIdText = document.getElementById("reservationIdText");
   const clientNameText = document.getElementById("clientNameText");
@@ -26,6 +33,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   let pendingPayment = null;
   let client = null;
+  let latestReservation = null;
 
   function showMessage(message, type = "") {
     if (!paymentMessage) {
@@ -48,14 +56,45 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function setText(element, value) {
-    if (element) {
-      element.textContent = value || "—";
-    }
+    if (!element) return;
+
+    element.textContent =
+      value !== null && value !== undefined && value !== ""
+        ? value
+        : "—";
   }
 
   function getSelectedPaymentMethod() {
     const selected = document.querySelector('input[name="payment_method"]:checked');
     return selected ? selected.value : "";
+  }
+
+  function getReservationId() {
+    return (
+      pendingPayment?.reservation_id ||
+      pendingPayment?.reservationId ||
+      latestReservation?.reservation_id ||
+      latestReservation?.reservationId ||
+      null
+    );
+  }
+
+  function getTotalAmount() {
+    return Number(
+      pendingPayment?.total_amount ||
+      pendingPayment?.totalAmount ||
+      latestReservation?.total_amount ||
+      latestReservation?.totalAmount ||
+      0
+    );
+  }
+
+  function getDownpaymentAmount() {
+    return getTotalAmount() * DOWNPAYMENT_RATE;
+  }
+
+  function getRemainingBalance() {
+    return getTotalAmount() * BALANCE_RATE;
   }
 
   function togglePaymentBoxes() {
@@ -70,20 +109,118 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     if (proofInput) {
-      proofInput.required = method === "GCash" || method === "Bank Transfer";
+      proofInput.required = true;
     }
   }
 
-  function loadPaymentData() {
-    if (!pendingPaymentRaw) {
-      showMessage("No pending payment found. Please create a reservation first.", "error");
+  function disablePaymentForm(message) {
+    showMessage(message, "error");
 
-      if (paymentForm) {
-        paymentForm.querySelectorAll("input, button").forEach(el => {
-          el.disabled = true;
-        });
+    if (paymentForm) {
+      paymentForm.querySelectorAll("input, button").forEach(el => {
+        el.disabled = true;
+      });
+    }
+  }
+
+  async function fetchReservationById(reservationId) {
+    if (!reservationId || reservationId === "Pending") return null;
+
+    try {
+      const response = await fetch(`${RESERVATION_API}/${reservationId}`, {
+        method: "GET",
+        headers: {
+          Accept: "application/json"
+        }
+      });
+
+      const rawText = await response.text();
+
+      let data = {};
+      try {
+        data = rawText ? JSON.parse(rawText) : {};
+      } catch {
+        data = {};
       }
 
+      if (!response.ok) {
+        console.warn(`Reservation fetch failed. HTTP ${response.status}`, data);
+        return null;
+      }
+
+      return data;
+    } catch (error) {
+      console.warn("Reservation fetch error:", error);
+      return null;
+    }
+  }
+
+  function renderPaymentDetails() {
+    const reservationId = getReservationId() || "Pending";
+
+    const clientName =
+      pendingPayment?.client_name ||
+      pendingPayment?.clientName ||
+      latestReservation?.client_name ||
+      latestReservation?.clientName ||
+      latestReservation?.full_name ||
+      latestReservation?.fullName ||
+      client?.full_name ||
+      client?.fullName ||
+      "Client";
+
+    const eventType =
+      pendingPayment?.event_type ||
+      pendingPayment?.eventType ||
+      latestReservation?.event_type ||
+      latestReservation?.eventType;
+
+    const eventDate =
+      pendingPayment?.event_date ||
+      pendingPayment?.eventDate ||
+      latestReservation?.event_date ||
+      latestReservation?.eventDate;
+
+    const eventTime =
+      pendingPayment?.event_time ||
+      pendingPayment?.eventTime ||
+      latestReservation?.event_time ||
+      latestReservation?.eventTime;
+
+    const venue =
+      pendingPayment?.venue ||
+      latestReservation?.venue;
+
+    const packageName =
+      pendingPayment?.package_name ||
+      pendingPayment?.packageName ||
+      latestReservation?.package_name ||
+      latestReservation?.packageName;
+
+    setText(reservationIdText, reservationId);
+    setText(clientNameText, clientName);
+    setText(eventTypeText, eventType);
+    setText(eventDateText, eventDate);
+    setText(eventTimeText, eventTime);
+    setText(venueText, venue);
+    setText(packageNameText, packageName);
+
+    if (paymentTotal) {
+      paymentTotal.textContent = formatCurrency(getTotalAmount());
+    }
+
+    if (downpaymentAmount) {
+      downpaymentAmount.textContent = formatCurrency(getDownpaymentAmount());
+    }
+
+    if (remainingBalance) {
+      remainingBalance.textContent = formatCurrency(getRemainingBalance());
+    }
+  }
+
+  async function loadPaymentData() {
+    if (!pendingPaymentRaw) {
+      disablePaymentForm("No pending payment found. Please create a reservation first.");
       return;
     }
 
@@ -92,7 +229,7 @@ document.addEventListener("DOMContentLoaded", function () {
     } catch (error) {
       console.error("Invalid pendingPayment:", error);
       localStorage.removeItem("pendingPayment");
-      showMessage("Invalid payment data. Please create a reservation again.", "error");
+      disablePaymentForm("Invalid payment data. Please create a reservation again.");
       return;
     }
 
@@ -104,20 +241,23 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     }
 
-    const reservationId = pendingPayment.reservation_id || pendingPayment.reservationId || "Pending";
-    const clientName = pendingPayment.client_name || pendingPayment.clientName || client?.full_name || client?.fullName || "Client";
-    const totalAmount = pendingPayment.total_amount || pendingPayment.totalAmount || 0;
+    renderPaymentDetails();
 
-    setText(reservationIdText, reservationId);
-    setText(clientNameText, clientName);
-    setText(eventTypeText, pendingPayment.event_type || pendingPayment.eventType);
-    setText(eventDateText, pendingPayment.event_date || pendingPayment.eventDate);
-    setText(eventTimeText, pendingPayment.event_time || pendingPayment.eventTime);
-    setText(venueText, pendingPayment.venue);
-    setText(packageNameText, pendingPayment.package_name || pendingPayment.packageName);
+    const reservationId =
+      pendingPayment.reservation_id ||
+      pendingPayment.reservationId;
 
-    if (paymentTotal) {
-      paymentTotal.textContent = formatCurrency(totalAmount);
+    if (reservationId && reservationId !== "Pending") {
+      latestReservation = await fetchReservationById(reservationId);
+      renderPaymentDetails();
+    }
+
+    if (!getReservationId()) {
+      showMessage("Reservation ID is missing. Please create the reservation again.", "error");
+    }
+
+    if (!getTotalAmount() || getTotalAmount() <= 0) {
+      showMessage("Warning: total amount is missing or zero. Please check the reservation data.", "error");
     }
   }
 
@@ -142,28 +282,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
     reader.onload = function (e) {
       proofPreview.innerHTML = `
-        <img 
-          src="${e.target.result}" 
-          alt="Proof of payment" 
-          style="width:100%;max-width:260px;border-radius:14px;margin-top:12px;"
-        >
+        <img
+          src="${e.target.result}"
+          alt="Proof of payment"
+        />
       `;
     };
 
     reader.readAsDataURL(file);
-  }
-
-  function fileToBase64(file) {
-    if (!file) return Promise.resolve(null);
-
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = reject;
-
-      reader.readAsDataURL(file);
-    });
   }
 
   async function submitPayment(e) {
@@ -171,6 +297,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (!pendingPayment) {
       showMessage("No pending payment found.", "error");
+      return;
+    }
+
+    const reservationId = getReservationId();
+
+    if (!reservationId || reservationId === "Pending") {
+      console.log("pendingPayment missing reservation_id:", pendingPayment);
+      showMessage("Reservation ID is missing. Please create the reservation again.", "error");
       return;
     }
 
@@ -182,33 +316,33 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
 
-    if ((method === "GCash" || method === "Bank Transfer") && !proofFile) {
-      showMessage("Please upload proof of payment.", "error");
+    if (!proofFile) {
+      showMessage("Please upload proof of 70% downpayment.", "error");
       return;
     }
 
-    showMessage("Submitting payment...");
+    if (!proofFile.type.startsWith("image/")) {
+      showMessage("Please upload image file only.", "error");
+      return;
+    }
+
+    const submitButton = paymentForm.querySelector('button[type="submit"]');
+    if (submitButton) {
+      submitButton.disabled = true;
+      submitButton.textContent = "Submitting...";
+    }
+
+    showMessage("Uploading proof of 70% downpayment...");
 
     try {
-      const proofBase64 = await fileToBase64(proofFile);
+      const formData = new FormData();
+      formData.append("reservation_id", Number(reservationId));
+      formData.append("payment_method", method);
+      formData.append("proof_of_payment", proofFile);
 
-      const payload = {
-        reservation_id: Number(pendingPayment.reservation_id || pendingPayment.reservationId || 0),
-        payment_method: method,
-        transaction_status: "Pending",
-        payment_date: new Date().toISOString(),
-        description: `Payment submitted for ${pendingPayment.package_name || pendingPayment.packageName || "reservation"}`,
-        is_deleted: false,
-        proof_payment: proofBase64,
-        proof_payment_file_name: proofFile ? proofFile.name : null
-      };
-
-      const response = await fetch(PAYMENT_API, {
+      const response = await fetch(UPLOAD_PROOF_API, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(payload)
+        body: formData
       });
 
       const rawText = await response.text();
@@ -222,20 +356,35 @@ document.addEventListener("DOMContentLoaded", function () {
 
       if (!response.ok) {
         showMessage(result.message || `Payment failed. HTTP ${response.status}`, "error");
+
+        if (submitButton) {
+          submitButton.disabled = false;
+          submitButton.textContent = "Proceed Payment";
+        }
+
         return;
       }
 
-      showMessage(result.message || "Payment submitted successfully.", "success");
+      showMessage(
+        result.message ||
+        `70% downpayment submitted successfully. Remaining 30% balance is ${formatCurrency(getRemainingBalance())}, payable on the event day.`,
+        "success"
+      );
 
       localStorage.removeItem("pendingPayment");
 
       setTimeout(() => {
         window.location.href = "../index.html";
-      }, 1500);
+      }, 1800);
 
     } catch (error) {
       console.error("Payment submit error:", error);
-      showMessage(`Cannot connect to payment API: ${error.message}`, "error");
+      showMessage(`Cannot upload proof: ${error.message}`, "error");
+
+      if (submitButton) {
+        submitButton.disabled = false;
+        submitButton.textContent = "Proceed Payment";
+      }
     }
   }
 

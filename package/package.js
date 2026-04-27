@@ -1,8 +1,9 @@
 document.addEventListener("DOMContentLoaded", async () => {
   setClientNavbar();
 
-  const PACKAGE_API = "https://localhost:7241/Package";
-  const MOST_BOOKED_API = "https://localhost:7241/api/Report/most-booked-package";
+  const API_BASE = "https://bmscatering-api.azurewebsites.net";
+  const PACKAGE_API = `${API_BASE}/Package`;
+  const MOST_BOOKED_API = `${API_BASE}/api/Report/most-booked-package`;
 
   const loadingState = document.getElementById("loadingState");
   const errorState = document.getElementById("errorState");

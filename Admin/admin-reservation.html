@@ -24,11 +24,10 @@
         </div>
 
         <nav class="sidebar-nav">
-          <a href="admin-dashboard.html" >Dashboard</a>
+          <a href="admin-dashboard.html">Dashboard</a>
           <a href="#" class="active">Reservations</a>
           <a href="client.html">Clients</a>
           <a href="admin-report.html">Reports</a>
-          <a href="#">Settings</a>
         </nav>
       </div>
 
@@ -59,8 +58,6 @@
           <h3 id="totalReservations">0</h3>
         </div>
 
-        
-
         <div class="stat-card">
           <span>Pending</span>
           <h3 id="pendingReservations">0</h3>
@@ -77,12 +74,7 @@
         </div>
 
         <div class="stat-card revenue-card">
-          <span>Total Package Price</span>
-          <h3 id="totalPackagePrice">₱0.00</h3>
-        </div>
-
-        <div class="stat-card revenue-card">
-          <span>Total Revenue</span>
+          <span>Total Successful Payment</span>
           <h3 id="totalRevenue">₱0.00</h3>
         </div>
       </section>
@@ -100,6 +92,7 @@
               id="searchInput"
               placeholder="Search client, venue, event type..."
             />
+
             <select id="statusFilter">
               <option value="all">All Status</option>
               <option value="Pending">Pending</option>
@@ -123,6 +116,7 @@
                 <th>Actions</th>
               </tr>
             </thead>
+
             <tbody id="reservationTableBody">
               <tr>
                 <td colspan="8" class="empty-state">Loading reservations...</td>
@@ -131,58 +125,6 @@
           </table>
         </div>
       </section>
-
-      <section class="reports-grid">
-  <section class="panel">
-    <div class="panel-header">
-      <div>
-        <h3>Reservations with 100–300 Pax</h3>
-        <p>Filtered package reservations based on total pax.</p>
-      </div>
-    </div>
-
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Reservation ID</th>
-            <th>Total Pax</th>
-          </tr>
-        </thead>
-        <tbody id="filterPackagesBody">
-          <tr>
-            <td colspan="2" class="empty-state">Loading filtered packages...</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
-
-  <section class="panel">
-    <div class="panel-header">
-      <div>
-        <h3>Reservations with Multiple Hosts</h3>
-        <p>Reservations assigned with more than one host.</p>
-      </div>
-    </div>
-
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Reservation ID</th>
-            <th>Host Count</th>
-          </tr>
-        </thead>
-        <tbody id="countHostBody">
-          <tr>
-            <td colspan="2" class="empty-state">Loading host count report...</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
-</section>
     </main>
   </div>
 

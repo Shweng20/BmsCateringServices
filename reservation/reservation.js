@@ -1,10 +1,10 @@
 document.addEventListener("DOMContentLoaded", function () {
-  const API_BASE = "https://localhost:7241";
-  const RESERVATION_API = `${API_BASE}/Reservation`;
-  const MENU_API = `${API_BASE}/Menu`;
-  const DECORATION_API = `${API_BASE}/Decoration`;
-  const HOST_API = `${API_BASE}/Host`;
-  const SOUND_LIGHT_API = `${API_BASE}/SoundLight`;
+const API_BASE = "https://bmscatering-api.azurewebsites.net";
+const RESERVATION_API = `${API_BASE}/Reservation`;
+const MENU_API = `${API_BASE}/Menu`;
+const DECORATION_API = `${API_BASE}/Decoration`;
+const HOST_API = `${API_BASE}/Host`;
+const SOUND_LIGHT_API = `${API_BASE}/SoundLight`;
 
   const EXTRA_PAX_RATE = 400;
   const PACKAGE3_TABLE_RATE_PER_PAX = 200;
@@ -104,6 +104,46 @@ document.addEventListener("DOMContentLoaded", function () {
     return item?.[snakeKey] ?? item?.[camelKey] ?? "";
   }
 
+  function getMenuChoiceGroup() {
+    if (!menuChoiceInput) return null;
+
+    return (
+      menuChoiceInput.closest(".form-group") ||
+      menuChoiceInput.closest(".form-control-group") ||
+      menuChoiceInput.closest(".input-group") ||
+      menuChoiceInput.parentElement
+    );
+  }
+
+  function getSelectedPackageId() {
+    const rawPackage = localStorage.getItem("selectedPackage");
+
+    if (rawPackage) {
+      try {
+        const selectedPackage = JSON.parse(rawPackage);
+
+        const packageId = Number(
+          selectedPackage.package_id ||
+          selectedPackage.packageId ||
+          selectedPackage.id ||
+          0
+        );
+
+        if (packageId > 0) return packageId;
+      } catch (error) {
+        console.error("Invalid selectedPackage while getting package_id:", error);
+      }
+    }
+
+    const packageName = packageNameInput.value.trim().toLowerCase();
+
+    if (packageName.includes("package 1")) return 9;
+    if (packageName.includes("package 2")) return 10;
+    if (packageName.includes("package 3")) return 11;
+
+    return 0;
+  }
+
   function isPackage3() {
     return packageNameInput.value.trim().toLowerCase().includes("package 3");
   }
@@ -186,10 +226,7 @@ document.addEventListener("DOMContentLoaded", function () {
       description.includes("pasta") ||
       foodName.includes("pasta") ||
       foodName.includes("spaghetti") ||
-      foodName.includes("carbonara") ||
-      foodName.includes("macaroni") ||
-      foodName.includes("lasagna") ||
-      foodName.includes("fettuccine")
+      foodName.includes("carbonara")
     );
   }
 
@@ -303,6 +340,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const choice = menuChoiceInput.value;
 
+    const menuChoiceGroup = getMenuChoiceGroup();
     const menuSection = document.querySelector(".menu-section");
     const selectionBox = document.querySelector(".selection-box:not(#selectedSetPreview)");
     const filterRow = document.querySelector(".filter-row");
@@ -311,15 +349,19 @@ document.addEventListener("DOMContentLoaded", function () {
     selectedMenus.clear();
 
     if (isPackage3()) {
+      if (menuChoiceGroup) menuChoiceGroup.classList.add("hidden");
       if (selectedSetPreview) selectedSetPreview.classList.add("hidden");
       if (menuSection) menuSection.classList.add("hidden");
       if (selectionBox) selectionBox.classList.add("hidden");
       if (filterRow) filterRow.classList.add("hidden");
       if (clientRequestGroup) clientRequestGroup.classList.add("hidden");
 
+      menuChoiceInput.value = "";
       renderSelectedFood();
       return;
     }
+
+    if (menuChoiceGroup) menuChoiceGroup.classList.remove("hidden");
 
     if (choice === "Customize") {
       if (selectedSetPreview) selectedSetPreview.classList.add("hidden");
@@ -356,7 +398,7 @@ document.addEventListener("DOMContentLoaded", function () {
             <div class="selected-food-item">
               <div>
                 <strong>${escapeHtml(item.food_name)}</strong>
-                <span>${escapeHtml(item.category)}</span>
+                <span>${escapeHtml(item.category || item.description || "Menu")}</span>
               </div>
               <span class="count-badge">Included</span>
             </div>
@@ -455,13 +497,21 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function handlePackageUI() {
     const package3Options = document.getElementById("package3Options");
-
-    if (!package3Options) return;
+    const menuChoiceGroup = getMenuChoiceGroup();
 
     if (isPackage3()) {
-      package3Options.classList.remove("hidden");
+      if (package3Options) package3Options.classList.remove("hidden");
+      if (menuChoiceGroup) menuChoiceGroup.classList.add("hidden");
+      if (selectedSetPreview) selectedSetPreview.classList.add("hidden");
+
+      selectedMenus.clear();
+
+      if (menuChoiceInput) {
+        menuChoiceInput.value = "";
+      }
     } else {
-      package3Options.classList.add("hidden");
+      if (package3Options) package3Options.classList.add("hidden");
+      if (menuChoiceGroup) menuChoiceGroup.classList.remove("hidden");
     }
 
     updatePastaChoiceVisibility();
@@ -514,7 +564,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     totalAmountText.textContent = formatCurrency(totalAmount);
-    handlePackageUI();
 
     return {
       basePrice,
@@ -938,7 +987,7 @@ document.addEventListener("DOMContentLoaded", function () {
           <div>
             <h4>${escapeHtml(item.food_name)}</h4>
             <div class="menu-meta">
-              <span class="menu-badge">${escapeHtml(item.category || "Menu")}</span>
+              <span class="menu-badge">${escapeHtml(item.category || item.description || "Menu")}</span>
               ${item._score > 0 ? `<span class="menu-badge">Recommended</span>` : ""}
             </div>
           </div>
@@ -1021,7 +1070,7 @@ document.addEventListener("DOMContentLoaded", function () {
           selectedPastas.length >= pastaLimit
         ) {
           showToast(
-            `Package 2 allows up to ${pastaLimit} pasta choice only.`,
+            `Package 2 allows only 1 pasta choice. Choose either Spaghetti or Carbonara.`,
             "warning",
             4000
           );
@@ -1091,7 +1140,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (!items.length) {
       selectedFoodList.className = "selected-food-list empty-state";
-      selectedFoodList.textContent = "No food selected yet.";
+      selectedFoodList.textContent = isPackage3()
+        ? "No menu selection needed for Package 3."
+        : "No food selected yet.";
       return;
     }
 
@@ -1126,6 +1177,15 @@ document.addEventListener("DOMContentLoaded", function () {
       right: "dayGridMonth"
     },
 
+    validRange: function () {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      return {
+        start: today
+      };
+    },
+
     events: async function (fetchInfo, successCallback, failureCallback) {
       try {
         const url = `${RESERVATION_API}?start=${encodeURIComponent(fetchInfo.startStr)}&end=${encodeURIComponent(fetchInfo.endStr)}`;
@@ -1145,12 +1205,21 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         const events = (data || [])
-          .filter(item => !(item.is_deleted ?? item.isDeleted) && (item.event_date || item.eventDate))
+          .filter(item => {
+            const isDeleted = item.is_deleted ?? item.isDeleted ?? false;
+            const status = String(item.reservation_status ?? item.reservationStatus ?? "").toLowerCase();
+            const eventDate = item.event_date ?? item.eventDate;
+
+            return !isDeleted && eventDate && status !== "cancelled";
+          })
           .map(item => ({
             id: item.reservation_id ?? item.reservationId,
             title: "Reserved",
             start: item.event_date ?? item.eventDate,
-            allDay: true
+            allDay: true,
+            backgroundColor: "#ef4444",
+            borderColor: "#ef4444",
+            textColor: "#ffffff"
           }));
 
         successCallback(events);
@@ -1162,6 +1231,24 @@ document.addEventListener("DOMContentLoaded", function () {
     },
 
     dateClick: function (info) {
+      const clickedDate = new Date(info.dateStr + "T00:00:00");
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      if (clickedDate < today) {
+        showToast("You cannot book a past date.", "warning", 3500);
+        return;
+      }
+
+      const isAlreadyReserved = calendar.getEvents().some(event => {
+        return event.startStr.substring(0, 10) === info.dateStr;
+      });
+
+      if (isAlreadyReserved) {
+        showToast("This date is already reserved. Please choose another date.", "warning", 4000);
+        return;
+      }
+
       eventDateInput.value = info.dateStr;
 
       if (selectedDateCell) {
@@ -1170,6 +1257,20 @@ document.addEventListener("DOMContentLoaded", function () {
 
       info.dayEl.classList.add("fc-day-selected");
       selectedDateCell = info.dayEl;
+    },
+
+    eventClick: function () {
+      showToast("This date is already reserved. Please choose another date.", "warning", 4000);
+    },
+
+    dayCellDidMount: function (info) {
+      const cellDate = new Date(info.date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      if (cellDate < today) {
+        info.el.classList.add("calendar-past-date");
+      }
     }
   });
 
@@ -1183,16 +1284,16 @@ document.addEventListener("DOMContentLoaded", function () {
   renderSelectedFood();
   loadSelectedPackage();
   computePricing();
-  updatePastaChoiceVisibility();
+  handlePackageUI();
 
   packageNameInput.addEventListener("input", function () {
     applyPackagePrice();
-    updatePastaChoiceVisibility();
+    handlePackageUI();
   });
 
   packageNameInput.addEventListener("change", function () {
     applyPackagePrice();
-    updatePastaChoiceVisibility();
+    handlePackageUI();
   });
 
   [packagePriceInput, minimumPaxInput, expectedPaxInput].forEach(input => {
@@ -1219,6 +1320,24 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
 
+    const selectedEventDate = new Date(form.event_date.value + "T00:00:00");
+    const todayDate = new Date();
+    todayDate.setHours(0, 0, 0, 0);
+
+    if (selectedEventDate < todayDate) {
+      showToast("You cannot book a past date.", "warning", 4000);
+      return;
+    }
+
+    const alreadyReserved = calendar.getEvents().some(event => {
+      return event.startStr.substring(0, 10) === form.event_date.value;
+    });
+
+    if (alreadyReserved) {
+      showToast("This date is already reserved. Please choose another date.", "warning", 4000);
+      return;
+    }
+
     const pricing = computePricing();
     const isPackageThree = isPackage3();
 
@@ -1232,9 +1351,35 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
 
-    if (!isPackageThree && menuChoiceInput.value === "Customize" && selectedMenus.size === 0) {
-      showToast("Please select at least one food item.", "warning");
-      return;
+    if (!isPackageThree && menuChoiceInput.value === "Customize") {
+      const selectedFoodCount = getSelectedFoodMenus().length;
+      const selectedDessertCount = getSelectedDesserts().length;
+      const selectedPastaCount = getSelectedPastas().length;
+
+      if (isPackage1()) {
+        if (selectedFoodCount < 4 || selectedDessertCount < 1) {
+          showToast(
+            "Package 1 requires 4 food choices and 1 dessert.",
+            "warning",
+            4000
+          );
+          return;
+        }
+      } else if (isPackage2()) {
+        if (selectedFoodCount < 5 || selectedPastaCount < 1 || selectedDessertCount < 1) {
+          showToast(
+            "Package 2 requires 5 food choices, 1 pasta, and 1 dessert.",
+            "warning",
+            4000
+          );
+          return;
+        }
+      } else {
+        if (selectedMenus.size === 0) {
+          showToast("Please select at least one food item.", "warning");
+          return;
+        }
+      }
     }
 
     if (
@@ -1285,7 +1430,7 @@ document.addEventListener("DOMContentLoaded", function () {
       getSelectedPastas().length > pastaLimit
     ) {
       showToast(
-        `Package 2 allows up to ${pastaLimit} pasta choice only.`,
+        "Package 2 allows only 1 pasta choice. Choose either Spaghetti or Carbonara.",
         "warning",
         4000
       );
@@ -1302,44 +1447,80 @@ document.addEventListener("DOMContentLoaded", function () {
     const rawTime = form.event_time.value;
     const safeTime = rawTime ? `${rawTime}:00` : "";
 
+    const selectedPackageId = getSelectedPackageId();
+
+    if (selectedPackageId <= 0) {
+      showToast("Package ID is missing. Please go back to the packages page and select a package again.", "warning", 5000);
+      return;
+    }
+
+    const selectedHostId =
+      hostOptionInput && hostOptionInput.value
+        ? Number(hostOptionInput.value)
+        : null;
+
+    const selectedSoundLightId =
+      soundLightOptionInput && soundLightOptionInput.value
+        ? Number(soundLightOptionInput.value)
+        : null;
+
+    const selectedDecorationId =
+      decorationOption && decorationOption.value
+        ? Number(decorationOption.value)
+        : null;
+
+    const selectedMenuPayload = isPackageThree
+      ? []
+      : menuChoiceInput.value === "Customize"
+        ? [...selectedMenus.values()]
+        : getMenusByBuffetSet(menuChoiceInput.value);
+
     const payload = {
       client_id: Number(clientId),
+      package_id: selectedPackageId,
+
+      host_id: selectedHostId,
+      sound_light_id: selectedSoundLightId,
+      decoration_id: selectedDecorationId,
+
       event_type: form.event_type.value.trim(),
       event_date: form.event_date.value,
       event_time: safeTime,
       venue: form.venue.value.trim(),
+
       package_name: form.package_name.value.trim(),
       package_price: pricing.basePrice,
+
       minimum_pax: pricing.minimumPax,
       expected_pax: pricing.expectedPax,
       additional_pax: pricing.additionalPax,
-      extra_pax_charge: isPackageThree ? pricing.tableReservationAmount : pricing.extraCharge,
+
+      extra_pax_charge: isPackageThree
+        ? pricing.tableReservationAmount
+        : pricing.extraCharge,
+
       total_amount: pricing.totalAmount,
 
-      client_request: isPackageThree || menuChoiceInput.value !== "Customize"
-        ? ""
-        : form.client_request.value.trim(),
+      client_request:
+        isPackageThree || menuChoiceInput.value !== "Customize"
+          ? ""
+          : form.client_request.value.trim(),
 
       menu_choice: isPackageThree ? null : menuChoiceInput.value,
 
-      selected_menus: isPackageThree
-        ? []
-        : menuChoiceInput.value === "Customize"
-          ? [...selectedMenus.values()]
-          : getMenusByBuffetSet(menuChoiceInput.value),
+      selected_menus: selectedMenuPayload,
+      selected_menus_json: JSON.stringify(selectedMenuPayload),
 
-      host_id: hostOptionInput && hostOptionInput.value ? Number(hostOptionInput.value) : null,
       host_option: getSelectedHostName(),
       host_price: pricing.hostPrice || 0,
 
-      sound_light_id: soundLightOptionInput && soundLightOptionInput.value ? Number(soundLightOptionInput.value) : null,
       sound_light_option: getSelectedSoundLightName(),
       sound_light_price: pricing.soundLightPrice || 0,
 
       table_count: isPackageThree ? pricing.tableCount : null,
-      decoration_id: isPackageThree && decorationOption ? Number(decorationOption.value) : null,
-      decoration_option: isPackageThree ? getSelectedDecorationName() : null,
-      decoration_price: isPackageThree ? pricing.decorationPrice : 0
+
+      decoration_option: selectedDecorationId ? getSelectedDecorationName() : null,
+      decoration_price: selectedDecorationId ? pricing.decorationPrice : 0
     };
 
     console.log("Reservation payload:", payload);
@@ -1363,27 +1544,87 @@ document.addEventListener("DOMContentLoaded", function () {
       }
 
       if (response.ok) {
-        showToast(result.message || "Booking request sent successfully! Redirecting to payment...", "success");
+        showToast(
+          result.message || "Booking request sent successfully! Redirecting to payment...",
+          "success"
+        );
+
+        console.log("Reservation API result:", result);
+
+        const newReservationId =
+          result.reservation_id ||
+          result.reservationId ||
+          result.ReservationId ||
+          result.id ||
+          result.ID ||
+          result.data?.reservation_id ||
+          result.data?.reservationId ||
+          result.data?.ReservationId ||
+          null;
+
+        if (!newReservationId) {
+          console.error("Reservation was created but backend did not return reservation_id.", result);
+          showToast(
+            "Reservation created, but reservation ID was not returned. Please fix backend response.",
+            "error",
+            5000
+          );
+          return;
+        }
 
         const paymentData = {
-          reservation_id: result.reservation_id || result.reservationId || null,
+          reservation_id: newReservationId,
+
           client_id: Number(clientId),
+          package_id: selectedPackageId,
           client_name: fullName,
+
           event_type: form.event_type.value.trim(),
           event_date: form.event_date.value,
           event_time: safeTime,
           venue: form.venue.value.trim(),
+
           package_name: form.package_name.value.trim(),
+          package_price: pricing.basePrice,
+
+          minimum_pax: pricing.minimumPax,
+          expected_pax: pricing.expectedPax,
+          additional_pax: pricing.additionalPax,
+
+          extra_pax_charge: isPackageThree
+            ? pricing.tableReservationAmount
+            : pricing.extraCharge,
+
+          host_id: selectedHostId,
+          host_option: getSelectedHostName(),
+          host_price: pricing.hostPrice || 0,
+
+          sound_light_id: selectedSoundLightId,
+          sound_light_option: getSelectedSoundLightName(),
+          sound_light_price: pricing.soundLightPrice || 0,
+
+          decoration_id: selectedDecorationId,
+          decoration_option: selectedDecorationId ? getSelectedDecorationName() : null,
+          decoration_price: selectedDecorationId ? pricing.decorationPrice : 0,
+
+          selected_menus: selectedMenuPayload,
+
           total_amount: pricing.totalAmount
         };
+
+        console.log("Saved pendingPayment:", paymentData);
 
         localStorage.setItem("pendingPayment", JSON.stringify(paymentData));
 
         setTimeout(() => {
-          window.location.href = "payment.html";
+          window.location.href = "./payment.html";
         }, 1200);
       } else {
-        showToast(result.message || `Failed to submit booking. HTTP ${response.status}`, "error", 4000);
+        showToast(
+          result.message || `Failed to submit booking. HTTP ${response.status}`,
+          "error",
+          4000
+        );
       }
     } catch (error) {
       console.error("Submit error:", error);

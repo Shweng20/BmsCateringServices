@@ -1,27 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Payment | BM'S Catering Services</title>
+
   <link rel="stylesheet" href="payment.css" />
-  <link rel="icon" href="data:,">
+  <link rel="icon" href="data:," />
 </head>
 
 <body>
-    
   <div class="payment-modal show" id="paymentModal">
     <div class="payment-box">
 
       <div class="payment-left">
         <div class="qr-box">
-          <img src="../QRCODE.png" alt="InstaPay QR Code" class="qr-image">
+          <img src="../QRCODE.png" alt="InstaPay QR Code" class="qr-image" />
           <p>Scan to Pay</p>
         </div>
 
         <div class="proof-box">
           <label for="proofPayment">Proof of Payment</label>
-          <p>Upload a screenshot of your successful payment.</p>
+          <p>Upload a screenshot of your 70% downpayment.</p>
 
           <input
             type="file"
@@ -29,7 +29,7 @@
             name="proofPayment"
             accept="image/*"
             required
-          >
+          />
 
           <div id="proofPreview"></div>
         </div>
@@ -39,7 +39,10 @@
         <button class="payment-close" id="closePaymentModal" type="button">&times;</button>
 
         <h2>Payment Details</h2>
-        <p class="payment-note">Please review your reservation payment before proceeding.</p>
+        <p class="payment-note">
+          Please review your reservation payment before proceeding. Only 70% downpayment is required now.
+          The remaining 30% balance will be paid on the day of the event.
+        </p>
 
         <div class="payment-summary">
           <div>
@@ -82,26 +85,36 @@
             <strong id="paymentTotal">₱0.00</strong>
           </div>
 
+          <div class="highlight-row">
+            <span>70% Downpayment</span>
+            <strong id="downpaymentAmount">₱0.00</strong>
+          </div>
+
+          <div>
+            <span>30% Balance</span>
+            <strong id="remainingBalance">₱0.00</strong>
+          </div>
+
+          <div>
+            <span>Balance Payment</span>
+            <strong>To be paid on event day</strong>
+          </div>
+
           <div>
             <span>Payment Method</span>
-            <strong>Cash / GCash / Bank</strong>
+            <strong>GCash / Bank</strong>
           </div>
         </div>
 
         <form id="paymentForm">
           <div class="payment-methods">
             <label>
-              <input type="radio" name="payment_method" value="Cash" checked>
-              Cash Payment
-            </label>
-
-            <label>
-              <input type="radio" name="payment_method" value="GCash">
+              <input type="radio" name="payment_method" value="GCash" />
               GCash
             </label>
 
             <label>
-              <input type="radio" name="payment_method" value="Bank Transfer">
+              <input type="radio" name="payment_method" value="Bank Transfer" />
               Bank Transfer
             </label>
           </div>
@@ -119,7 +132,9 @@
 
           <p id="paymentMessage" class="payment-message"></p>
 
-          <button type="submit" class="btn btn--accent btn--block">Proceed Payment</button>
+          <button type="submit" class="btn btn--accent btn--block">
+            Proceed Payment
+          </button>
         </form>
       </div>
 
