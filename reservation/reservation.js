@@ -49,11 +49,17 @@ document.addEventListener("DOMContentLoaded", function () {
   let menuCatalog = [];
   let selectedMenus = new Map();
 
+  if (form) {
+    form.setAttribute("novalidate", "novalidate");
+  }
+
   const PACKAGE_PRICES = {
     package1: 16000,
     "package 1": 16000,
     package2: 20000,
-    "package 2": 20000
+    "package 2": 20000,
+    package3: 0,
+    "package 3": 0
   };
 
   if (minimumPaxInput) {
@@ -116,6 +122,30 @@ document.addEventListener("DOMContentLoaded", function () {
       menuChoiceInput.closest(".form-control-group") ||
       menuChoiceInput.parentElement
     );
+  }
+
+  function disableControls(container) {
+    if (!container) return;
+
+    container.querySelectorAll("input, select, textarea").forEach(control => {
+      control.dataset.wasRequired = control.required ? "true" : "false";
+      control.required = false;
+      control.removeAttribute("required");
+      control.disabled = true;
+    });
+  }
+
+  function enableControls(container) {
+    if (!container) return;
+
+    container.querySelectorAll("input, select, textarea").forEach(control => {
+      control.disabled = false;
+
+      if (control.dataset.wasRequired === "true") {
+        control.required = true;
+        control.setAttribute("required", "required");
+      }
+    });
   }
 
   function getSelectedPackageId() {
@@ -281,7 +311,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function getSelectedDecorationPrice() {
     const decorationSelect = document.getElementById("decoration_option");
-    if (!decorationSelect) return 0;
+    if (!decorationSelect || !decorationSelect.value) return 0;
 
     return Number(
       decorationSelect.options[decorationSelect.selectedIndex]?.dataset.price || 0
@@ -290,7 +320,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function getSelectedDecorationName() {
     const decorationSelect = document.getElementById("decoration_option");
-    if (!decorationSelect) return "";
+    if (!decorationSelect || !decorationSelect.value) return "";
 
     return decorationSelect.options[decorationSelect.selectedIndex]?.dataset.name || "";
   }
@@ -349,8 +379,16 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (menuChoiceInput) {
       menuChoiceInput.value = "";
+      menuChoiceInput.required = false;
       menuChoiceInput.removeAttribute("required");
+      menuChoiceInput.disabled = true;
     }
+
+    disableControls(menuChoiceGroup);
+    disableControls(menuSection);
+    disableControls(selectionBox);
+    disableControls(filterRow);
+    disableControls(clientRequestGroup);
 
     if (menuChoiceGroup) menuChoiceGroup.classList.add("hidden");
     if (selectedSetPreview) selectedSetPreview.classList.add("hidden");
@@ -362,6 +400,28 @@ document.addEventListener("DOMContentLoaded", function () {
     renderSelectedFood();
   }
 
+  function showNormalMenuFields() {
+    const menuChoiceGroup = getMenuChoiceGroup();
+    const menuSection = document.querySelector(".menu-section");
+    const selectionBox = document.querySelector(".selection-box:not(#selectedSetPreview)");
+    const filterRow = document.querySelector(".filter-row");
+    const clientRequestGroup = clientRequestInput?.closest(".form-group");
+
+    enableControls(menuChoiceGroup);
+    enableControls(menuSection);
+    enableControls(selectionBox);
+    enableControls(filterRow);
+    enableControls(clientRequestGroup);
+
+    if (menuChoiceInput) {
+      menuChoiceInput.disabled = false;
+      menuChoiceInput.required = true;
+      menuChoiceInput.setAttribute("required", "required");
+    }
+
+    if (menuChoiceGroup) menuChoiceGroup.classList.remove("hidden");
+  }
+
   function handleMenuChoice() {
     if (!menuChoiceInput) return;
 
@@ -370,18 +430,16 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
 
+    showNormalMenuFields();
+
     const choice = menuChoiceInput.value;
 
-    const menuChoiceGroup = getMenuChoiceGroup();
     const menuSection = document.querySelector(".menu-section");
     const selectionBox = document.querySelector(".selection-box:not(#selectedSetPreview)");
     const filterRow = document.querySelector(".filter-row");
     const clientRequestGroup = clientRequestInput?.closest(".form-group");
 
     selectedMenus.clear();
-
-    if (menuChoiceGroup) menuChoiceGroup.classList.remove("hidden");
-    menuChoiceInput.setAttribute("required", "required");
 
     if (choice === "Customize") {
       if (selectedSetPreview) selectedSetPreview.classList.add("hidden");
@@ -390,6 +448,11 @@ document.addEventListener("DOMContentLoaded", function () {
       if (selectionBox) selectionBox.classList.remove("hidden");
       if (filterRow) filterRow.classList.remove("hidden");
       if (clientRequestGroup) clientRequestGroup.classList.remove("hidden");
+
+      enableControls(menuSection);
+      enableControls(selectionBox);
+      enableControls(filterRow);
+      enableControls(clientRequestGroup);
 
       updatePastaChoiceVisibility();
       renderMenu();
@@ -404,6 +467,11 @@ document.addEventListener("DOMContentLoaded", function () {
       if (selectionBox) selectionBox.classList.add("hidden");
       if (filterRow) filterRow.classList.add("hidden");
       if (clientRequestGroup) clientRequestGroup.classList.add("hidden");
+
+      disableControls(menuSection);
+      disableControls(selectionBox);
+      disableControls(filterRow);
+      disableControls(clientRequestGroup);
 
       if (selectedSetPreview) selectedSetPreview.classList.remove("hidden");
       if (selectedSetBadge) selectedSetBadge.textContent = choice.replace("Buffet", "Set");
@@ -443,13 +511,18 @@ document.addEventListener("DOMContentLoaded", function () {
     if (filterRow) filterRow.classList.add("hidden");
     if (clientRequestGroup) clientRequestGroup.classList.add("hidden");
 
+    disableControls(menuSection);
+    disableControls(selectionBox);
+    disableControls(filterRow);
+    disableControls(clientRequestGroup);
+
     renderSelectedFood();
   }
 
   function applyPackagePrice() {
     const packageName = packageNameInput.value.trim().toLowerCase();
 
-    if (PACKAGE_PRICES[packageName]) {
+    if (PACKAGE_PRICES[packageName] !== undefined) {
       packagePriceInput.value = PACKAGE_PRICES[packageName];
     }
 
@@ -522,21 +595,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function handlePackageUI() {
     const package3Options = document.getElementById("package3Options");
-    const menuChoiceGroup = getMenuChoiceGroup();
 
     if (isPackage3()) {
       if (package3Options) package3Options.classList.remove("hidden");
-      if (menuChoiceGroup) menuChoiceGroup.classList.add("hidden");
-
       hidePackage3MenuFields();
     } else {
       if (package3Options) package3Options.classList.add("hidden");
-
-      if (menuChoiceInput) {
-        menuChoiceInput.setAttribute("required", "required");
-      }
-
-      if (menuChoiceGroup) menuChoiceGroup.classList.remove("hidden");
+      showNormalMenuFields();
       handleMenuChoice();
     }
 
@@ -726,7 +791,7 @@ document.addEventListener("DOMContentLoaded", function () {
         option.value = decorationId;
         option.textContent = `${decorationType}${theme ? ` - ${theme}` : ""} (${formatCurrency(price)})`;
         option.dataset.price = price;
-        option.dataset.name = decorationType;
+        option.dataset.name = theme ? `${decorationType} - ${theme}` : decorationType;
 
         decorationSelect.appendChild(option);
       });
@@ -961,7 +1026,10 @@ document.addEventListener("DOMContentLoaded", function () {
     } catch (error) {
       console.error("Menu catalog load failed:", error);
       menuCatalog = [];
-      showToast("Failed to load menu from backend.", "error", 4000);
+
+      if (!isPackage3()) {
+        showToast("Failed to load menu from backend.", "error", 4000);
+      }
     }
 
     renderMenu();
@@ -1390,8 +1458,26 @@ document.addEventListener("DOMContentLoaded", function () {
   form.addEventListener("submit", async function (e) {
     e.preventDefault();
 
+    const pricing = computePricing();
+    const isPackageThree = isPackage3();
+
+    if (!form.event_type.value.trim()) {
+      showToast("Please enter event type.", "warning");
+      return;
+    }
+
     if (!form.event_date.value) {
       showToast("Please select a date from the calendar.", "warning");
+      return;
+    }
+
+    if (!form.event_time.value) {
+      showToast("Please select event time.", "warning");
+      return;
+    }
+
+    if (!form.venue.value.trim()) {
+      showToast("Please enter venue.", "warning");
       return;
     }
 
@@ -1412,9 +1498,6 @@ document.addEventListener("DOMContentLoaded", function () {
       showToast("This date is already reserved. Please choose another date.", "warning", 4000);
       return;
     }
-
-    const pricing = computePricing();
-    const isPackageThree = isPackage3();
 
     if (pricing.minimumPax <= 0 || pricing.expectedPax <= 0) {
       showToast("Minimum pax and expected pax must be greater than zero.", "warning");
@@ -1658,6 +1741,9 @@ document.addEventListener("DOMContentLoaded", function () {
           decoration_option: selectedDecorationId ? getSelectedDecorationName() : null,
           decoration_price: selectedDecorationId ? pricing.decorationPrice : 0,
 
+          table_count: isPackageThree ? pricing.tableCount : null,
+          table_reservation_amount: isPackageThree ? pricing.tableReservationAmount : 0,
+
           selected_menus: selectedMenuPayload,
 
           total_amount: pricing.totalAmount
@@ -1671,6 +1757,8 @@ document.addEventListener("DOMContentLoaded", function () {
           window.location.href = "./payment.html";
         }, 1200);
       } else {
+        console.error("Reservation failed:", result);
+
         showToast(
           result.message || `Failed to submit booking. HTTP ${response.status}`,
           "error",
