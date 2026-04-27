@@ -43,13 +43,23 @@ function setAdminProfile() {
     el.textContent = email;
   });
 
+  document.querySelectorAll(".admin-info strong").forEach(el => {
+    el.textContent = fullName;
+  });
+
+  document.querySelectorAll(".admin-info span").forEach(el => {
+    el.textContent = email;
+  });
+
   document.querySelectorAll(".avatar").forEach(el => {
     el.textContent = fullName.charAt(0).toUpperCase();
   });
 }
 
 function setupLogout() {
-  const logoutBtn = document.querySelector(".logout-btn");
+  const logoutBtn =
+    document.querySelector(".logout-btn") ||
+    document.getElementById("logoutBtn");
 
   if (logoutBtn) {
     logoutBtn.addEventListener("click", () => {
@@ -60,7 +70,8 @@ function setupLogout() {
   }
 }
 
-const API_BASE = "https://bmscatering-api.azurewebsites.net/swagger";
+/* AZURE BACKEND URL */
+const API_BASE = "https://bmscatering-api.azurewebsites.net";
 const DASHBOARD_ENDPOINT = `${API_BASE}/api/AdminDashboard`;
 const REPORT_API = `${API_BASE}/api/Report`;
 
@@ -210,8 +221,6 @@ function renderServiceUsage(data) {
   const body = document.getElementById("serviceUsageBody");
   if (!body) return;
 
-  console.log("SERVICE USAGE API RESULT:", data);
-
   const rows = Array.isArray(data)
     ? data
     : data?.data || data?.result || data?.serviceUsage || [];
@@ -273,7 +282,6 @@ function getFlexibleValue(obj, keys) {
 
     normalizedMap[normalizedKey] = obj[originalKey];
   });
-  
 
   for (const key of keys) {
     const normalizedKey = key
