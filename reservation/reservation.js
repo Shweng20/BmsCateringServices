@@ -323,71 +323,15 @@ document.addEventListener("DOMContentLoaded", function () {
     return soundLightOptionInput.options[soundLightOptionInput.selectedIndex]?.dataset.name || "";
   }
 
-  function normalizeMenuChoice(value) {
-    const text = String(value || "").trim().toLowerCase();
-
-    if (text === "customize" || text === "customized" || text === "customize menu") {
-      return "Customize";
-    }
-
-    if (text === "buffet a" || text === "set a") return "Buffet A";
-    if (text === "buffet b" || text === "set b") return "Buffet B";
-    if (text === "buffet c" || text === "set c") return "Buffet C";
-    if (text === "buffet d" || text === "set d") return "Buffet D";
-
-    return String(value || "").trim();
-  }
-
-  function getMenuCategoryAliases(setCategory) {
-    const normalized = normalizeMenuChoice(setCategory);
-
-    if (normalized === "Buffet A") return ["buffet a", "set a", "a"];
-    if (normalized === "Buffet B") return ["buffet b", "set b", "b"];
-    if (normalized === "Buffet C") return ["buffet c", "set c", "c"];
-    if (normalized === "Buffet D") return ["buffet d", "set d", "d"];
-
-    return [String(setCategory || "").trim().toLowerCase()];
-  }
-
-  function buildMenuPayload(items, packageId) {
-    return (items || [])
-      .map(item => {
-        const menuId = Number(item.menu_id ?? item.menuId ?? item.id ?? 0);
-        const quantity = Math.max(Number(item.quantity || 1), 1);
-
-        return {
-          package_menu_id: item.package_menu_id ?? item.packageMenuId ?? 0,
-          package_id: Number(packageId || getSelectedPackageId()),
-          packageId: Number(packageId || getSelectedPackageId()),
-          menu_id: menuId,
-          menuId: menuId,
-          food_name: item.food_name ?? item.foodName ?? "",
-          foodName: item.food_name ?? item.foodName ?? "",
-          category: item.category ?? "",
-          description: item.description ?? "",
-          quantity: quantity,
-          is_deleted: false,
-          isDeleted: false
-        };
-      })
-      .filter(item => item.menu_id > 0);
-  }
-
   function getMenusByBuffetSet(setCategory) {
-    const aliases = getMenuCategoryAliases(setCategory);
-
     return menuCatalog
-      .filter(item => {
-        const category = String(item.category || "").trim().toLowerCase();
-        const description = String(item.description || "").trim().toLowerCase();
-
-        return aliases.includes(category) || aliases.includes(description);
-      })
+      .filter(item =>
+        String(item.category || "").trim().toLowerCase() ===
+        String(setCategory || "").trim().toLowerCase()
+      )
       .map(item => ({
-        menu_id: Number(item.menu_id),
-        menuId: Number(item.menu_id),
+        menu_id: item.menu_id,
         food_name: item.food_name,
-        foodName: item.food_name,
         category: item.category,
         description: item.description,
         quantity: 1
@@ -406,8 +350,6 @@ document.addEventListener("DOMContentLoaded", function () {
     if (menuChoiceInput) {
       menuChoiceInput.value = "";
       menuChoiceInput.removeAttribute("required");
-      menuChoiceInput.required = false;
-      menuChoiceInput.disabled = true;
     }
 
     if (menuChoiceGroup) menuChoiceGroup.classList.add("hidden");
@@ -428,8 +370,7 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
 
-    const choice = normalizeMenuChoice(menuChoiceInput.value);
-    menuChoiceInput.value = choice;
+    const choice = menuChoiceInput.value;
 
     const menuChoiceGroup = getMenuChoiceGroup();
     const menuSection = document.querySelector(".menu-section");
@@ -440,12 +381,9 @@ document.addEventListener("DOMContentLoaded", function () {
     selectedMenus.clear();
 
     if (menuChoiceGroup) menuChoiceGroup.classList.remove("hidden");
-
-    menuChoiceInput.disabled = false;
-    menuChoiceInput.required = true;
     menuChoiceInput.setAttribute("required", "required");
 
-    if (normalizeMenuChoice(choice) === "Customize") {
+    if (choice === "Customize") {
       if (selectedSetPreview) selectedSetPreview.classList.add("hidden");
 
       if (menuSection) menuSection.classList.remove("hidden");
@@ -459,7 +397,7 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
 
-    if (["Buffet A", "Buffet B", "Buffet C", "Buffet D"].includes(normalizeMenuChoice(choice))) {
+    if (["Buffet A", "Buffet B", "Buffet C", "Buffet D"].includes(choice)) {
       const setMenus = getMenusByBuffetSet(choice);
 
       if (menuSection) menuSection.classList.add("hidden");
@@ -595,8 +533,6 @@ document.addEventListener("DOMContentLoaded", function () {
       if (package3Options) package3Options.classList.add("hidden");
 
       if (menuChoiceInput) {
-        menuChoiceInput.disabled = false;
-        menuChoiceInput.required = true;
         menuChoiceInput.setAttribute("required", "required");
       }
 
@@ -1490,7 +1426,7 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
 
-    if (!isPackageThree && normalizeMenuChoice(menuChoiceInput.value) === "Customize") {
+    if (!isPackageThree && menuChoiceInput.value === "Customize") {
       const selectedFoodCount = getSelectedFoodMenus().length;
       const selectedDessertCount = getSelectedDesserts().length;
       const selectedPastaCount = getSelectedPastas().length;
@@ -1515,8 +1451,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (
       !isPackageThree &&
-      normalizeMenuChoice(menuChoiceInput.value) !== "Customize" &&
-      getMenusByBuffetSet(normalizeMenuChoice(menuChoiceInput.value)).length === 0
+      menuChoiceInput.value !== "Customize" &&
+      getMenusByBuffetSet(menuChoiceInput.value).length === 0
     ) {
       showToast(`No menu found for ${menuChoiceInput.value}. Please check your Menu table.`, "warning", 4000);
       return;
@@ -1528,7 +1464,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (
       !isPackageThree &&
-      normalizeMenuChoice(menuChoiceInput.value) === "Customize" &&
+      menuChoiceInput.value === "Customize" &&
       foodLimit !== null &&
       getSelectedFoodMenus().length > foodLimit
     ) {
@@ -1538,7 +1474,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (
       !isPackageThree &&
-      normalizeMenuChoice(menuChoiceInput.value) === "Customize" &&
+      menuChoiceInput.value === "Customize" &&
       dessertLimit !== null &&
       getSelectedDesserts().length > dessertLimit
     ) {
@@ -1548,7 +1484,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (
       !isPackageThree &&
-      normalizeMenuChoice(menuChoiceInput.value) === "Customize" &&
+      menuChoiceInput.value === "Customize" &&
       pastaLimit !== null &&
       getSelectedPastas().length > pastaLimit
     ) {
@@ -1588,20 +1524,11 @@ document.addEventListener("DOMContentLoaded", function () {
         ? Number(decorationOption.value)
         : null;
 
-    const normalizedMenuChoice = isPackageThree ? null : normalizeMenuChoice(menuChoiceInput.value);
-
-    const selectedMenuPayload = isPackageThree
+    const selectedFoodPayload = isPackageThree
       ? []
-      : normalizedMenuChoice === "Customize"
-        ? buildMenuPayload([...selectedMenus.values()], selectedPackageId)
-        : buildMenuPayload(getMenusByBuffetSet(normalizedMenuChoice), selectedPackageId);
-
-    if (!isPackageThree && selectedMenuPayload.length === 0) {
-      showToast("Selected food is empty. Please choose a buffet set or customize your food before proceeding.", "warning", 5000);
-      return;
-    }
-
-    const selectedMenuIds = selectedMenuPayload.map(item => item.menu_id);
+      : menuChoiceInput.value === "Customize"
+        ? [...selectedMenus.values()]
+        : getMenusByBuffetSet(menuChoiceInput.value);
 
     const payload = {
       client_id: Number(clientId),
@@ -1630,23 +1557,14 @@ document.addEventListener("DOMContentLoaded", function () {
       total_amount: pricing.totalAmount,
 
       client_request:
-        isPackageThree || !menuChoiceInput || normalizeMenuChoice(menuChoiceInput.value) !== "Customize"
+        isPackageThree || !menuChoiceInput || menuChoiceInput.value !== "Customize"
           ? ""
           : form.client_request.value.trim(),
 
-      menu_choice: normalizedMenuChoice,
-      menuChoice: normalizedMenuChoice,
+      menu_choice: isPackageThree ? null : menuChoiceInput.value,
 
-      selected_menus: selectedMenuPayload,
-      selectedMenus: selectedMenuPayload,
-      package_menus: selectedMenuPayload,
-      packageMenus: selectedMenuPayload,
-      selected_menu_ids: selectedMenuIds,
-      selectedMenuIds: selectedMenuIds,
-      selected_menus_json: JSON.stringify(selectedMenuPayload),
-      selectedMenusJson: JSON.stringify(selectedMenuPayload),
-      package_menus_json: JSON.stringify(selectedMenuPayload),
-      packageMenusJson: JSON.stringify(selectedMenuPayload),
+      selected_food: selectedFoodPayload,
+      selected_food_json: JSON.stringify(selectedFoodPayload),
 
       host_option: getSelectedHostName(),
       host_price: pricing.hostPrice || 0,
@@ -1740,7 +1658,7 @@ document.addEventListener("DOMContentLoaded", function () {
           decoration_option: selectedDecorationId ? getSelectedDecorationName() : null,
           decoration_price: selectedDecorationId ? pricing.decorationPrice : 0,
 
-          selected_menus: selectedMenuPayload,
+          selected_food: selectedFoodPayload,
 
           total_amount: pricing.totalAmount
         };
