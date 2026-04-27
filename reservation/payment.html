@@ -108,34 +108,46 @@
 
         <form id="paymentForm">
           <div class="payment-methods">
-            <label>
-              <input type="radio" name="payment_method" value="GCash" />
-              GCash
-            </label>
+          <label>
+            <input type="radio" name="payment_type" value="Downpayment" checked>
+            70% Downpayment
+          </label>
 
-            <label>
-              <input type="radio" name="payment_method" value="Bank Transfer" />
-              Bank Transfer
-            </label>
-          </div>
+        <label>
+          <input type="radio" name="payment_type" value="Full Payment">
+          Full Payment
+        </label>
+      </div>
 
-          <div class="gcash-box" id="gcashBox">
-            <p><strong>GCash Name:</strong> JO***A V.</p>
-            <p><strong>GCash Number:</strong> 0921420****</p>
-          </div>
+      <div class="payment-methods">
+    <label>
+      <input type="radio" name="payment_method" value="GCash" checked>
+      GCash
+    </label>
 
-          <div class="bank-box" id="bankBox">
-            <p><strong>Bank Name:</strong> PSBANK</p>
-            <p><strong>Account Name:</strong> Joshua Villarosa</p>
-            <p><strong>Account Number:</strong> 029110036801</p>
-          </div>
+    <label>
+      <input type="radio" name="payment_method" value="Bank Transfer">
+      Bank Transfer
+    </label>
+  </div>
 
-          <p id="paymentMessage" class="payment-message"></p>
+  <div class="gcash-box" id="gcashBox">
+    <p><strong>GCash Name:</strong> JO***A V.</p>
+    <p><strong>GCash Number:</strong> 0921420****</p>
+  </div>
 
-          <button type="submit" class="btn btn--accent btn--block">
-            Proceed Payment
-          </button>
-        </form>
+  <div class="bank-box" id="bankBox">
+    <p><strong>Bank Name:</strong> PSBANK</p>
+    <p><strong>Account Name:</strong> Joshua Villarosa</p>
+    <p><strong>Account Number:</strong> 029110036801</p>
+  </div>
+
+  <p id="paymentMessage" class="payment-message"></p>
+
+  <button type="submit" class="btn btn--accent btn--block">
+    Proceed Payment
+  </button>
+      </form>
       </div>
 
     </div>

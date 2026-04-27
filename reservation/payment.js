@@ -55,6 +55,22 @@ document.addEventListener("DOMContentLoaded", function () {
     }).format(Number(value || 0));
   }
 
+  function formatDate(value) {
+    if (!value) return "—";
+
+    const date = new Date(value);
+
+    if (isNaN(date.getTime())) {
+      return value;
+    }
+
+    return date.toLocaleDateString("en-PH", {
+      year: "numeric",
+      month: "short",
+      day: "numeric"
+    });
+  }
+
   function setText(element, value) {
     if (!element) return;
 
@@ -67,6 +83,36 @@ document.addEventListener("DOMContentLoaded", function () {
   function getSelectedPaymentMethod() {
     const selected = document.querySelector('input[name="payment_method"]:checked');
     return selected ? selected.value : "";
+  }
+
+  function getSelectedPaymentType() {
+    const selected = document.querySelector('input[name="payment_type"]:checked');
+
+    if (!selected) {
+      return "Downpayment";
+    }
+
+    return selected.value;
+  }
+
+  function getTransactionStatus() {
+    const paymentType = getSelectedPaymentType();
+
+    if (paymentType === "Full Payment") {
+      return "Approved";
+    }
+
+    return "Pending";
+  }
+
+  function getReservationStatusAfterPayment() {
+    const paymentType = getSelectedPaymentType();
+
+    if (paymentType === "Full Payment") {
+      return "Approved";
+    }
+
+    return "Pending";
   }
 
   function getReservationId() {
@@ -97,6 +143,26 @@ document.addEventListener("DOMContentLoaded", function () {
     return getTotalAmount() * BALANCE_RATE;
   }
 
+  function getAmountToPayNow() {
+    const paymentType = getSelectedPaymentType();
+
+    if (paymentType === "Full Payment") {
+      return getTotalAmount();
+    }
+
+    return getDownpaymentAmount();
+  }
+
+  function getBalanceAfterPayment() {
+    const paymentType = getSelectedPaymentType();
+
+    if (paymentType === "Full Payment") {
+      return 0;
+    }
+
+    return getRemainingBalance();
+  }
+
   function togglePaymentBoxes() {
     const method = getSelectedPaymentMethod();
 
@@ -111,6 +177,8 @@ document.addEventListener("DOMContentLoaded", function () {
     if (proofInput) {
       proofInput.required = true;
     }
+
+    renderPaymentDetails();
   }
 
   function disablePaymentForm(message) {
@@ -200,13 +268,13 @@ document.addEventListener("DOMContentLoaded", function () {
     setText(reservationIdText, reservationId);
     setText(clientNameText, clientName);
     setText(eventTypeText, eventType);
-    setText(eventDateText, eventDate);
+    setText(eventDateText, formatDate(eventDate));
     setText(eventTimeText, eventTime);
     setText(venueText, venue);
     setText(packageNameText, packageName);
 
     if (paymentTotal) {
-      paymentTotal.textContent = formatCurrency(getTotalAmount());
+      paymentTotal.textContent = formatCurrency(getAmountToPayNow());
     }
 
     if (downpaymentAmount) {
@@ -214,7 +282,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     if (remainingBalance) {
-      remainingBalance.textContent = formatCurrency(getRemainingBalance());
+      remainingBalance.textContent = formatCurrency(getBalanceAfterPayment());
     }
   }
 
@@ -292,6 +360,40 @@ document.addEventListener("DOMContentLoaded", function () {
     reader.readAsDataURL(file);
   }
 
+  async function updateReservationStatus(reservationId, status) {
+    try {
+      const response = await fetch(`${RESERVATION_API}/${reservationId}/status`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json"
+        },
+        body: JSON.stringify({
+          reservation_status: status
+        })
+      });
+
+      const rawText = await response.text();
+
+      let result = {};
+      try {
+        result = rawText ? JSON.parse(rawText) : {};
+      } catch {
+        result = { message: rawText };
+      }
+
+      if (!response.ok) {
+        console.warn("Reservation status update failed:", result);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.warn("Reservation status update error:", error);
+      return false;
+    }
+  }
+
   async function submitPayment(e) {
     e.preventDefault();
 
@@ -309,6 +411,9 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     const method = getSelectedPaymentMethod();
+    const paymentType = getSelectedPaymentType();
+    const transactionStatus = getTransactionStatus();
+    const reservationStatus = getReservationStatusAfterPayment();
     const proofFile = proofInput?.files?.[0] || null;
 
     if (!method) {
@@ -316,8 +421,23 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
 
+    if (method !== "GCash" && method !== "Bank Transfer") {
+      showMessage("Invalid payment method. Please select GCash or Bank Transfer.", "error");
+      return;
+    }
+
+    if (!paymentType) {
+      showMessage("Please select payment type.", "error");
+      return;
+    }
+
+    if (paymentType !== "Downpayment" && paymentType !== "Full Payment") {
+      showMessage("Invalid payment type.", "error");
+      return;
+    }
+
     if (!proofFile) {
-      showMessage("Please upload proof of 70% downpayment.", "error");
+      showMessage(`Please upload proof of ${paymentType.toLowerCase()}.`, "error");
       return;
     }
 
@@ -327,18 +447,25 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     const submitButton = paymentForm.querySelector('button[type="submit"]');
+
     if (submitButton) {
       submitButton.disabled = true;
       submitButton.textContent = "Submitting...";
     }
 
-    showMessage("Uploading proof of 70% downpayment...");
+    showMessage(`Uploading proof of ${paymentType.toLowerCase()}...`);
 
     try {
       const formData = new FormData();
+
       formData.append("reservation_id", Number(reservationId));
       formData.append("payment_method", method);
       formData.append("proof_of_payment", proofFile);
+
+      formData.append("payment_type", paymentType);
+      formData.append("payment_amount", Number(getAmountToPayNow()).toFixed(2));
+      formData.append("remaining_balance", Number(getBalanceAfterPayment()).toFixed(2));
+      formData.append("transaction_status", transactionStatus);
 
       const response = await fetch(UPLOAD_PROOF_API, {
         method: "POST",
@@ -365,11 +492,21 @@ document.addEventListener("DOMContentLoaded", function () {
         return;
       }
 
-      showMessage(
-        result.message ||
-        `70% downpayment submitted successfully. Remaining 30% balance is ${formatCurrency(getRemainingBalance())}, payable on the event day.`,
-        "success"
-      );
+      await updateReservationStatus(reservationId, reservationStatus);
+
+      if (paymentType === "Full Payment") {
+        showMessage(
+          result.message ||
+          "Full payment submitted successfully. Reservation is now approved.",
+          "success"
+        );
+      } else {
+        showMessage(
+          result.message ||
+          `70% downpayment submitted successfully. Remaining 30% balance is ${formatCurrency(getRemainingBalance())}, payable on the event day.`,
+          "success"
+        );
+      }
 
       localStorage.removeItem("pendingPayment");
 
@@ -390,6 +527,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
   document.querySelectorAll('input[name="payment_method"]').forEach(radio => {
     radio.addEventListener("change", togglePaymentBoxes);
+  });
+
+  document.querySelectorAll('input[name="payment_type"]').forEach(radio => {
+    radio.addEventListener("change", renderPaymentDetails);
   });
 
   if (proofInput) {
