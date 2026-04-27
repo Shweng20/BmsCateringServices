@@ -1689,4 +1689,4 @@ document.addEventListener("DOMContentLoaded", function () {
       showToast("Server connection error.", "error", 4000);
     }
   });
-});
+}); 
