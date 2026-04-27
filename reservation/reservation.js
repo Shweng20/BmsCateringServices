@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", function () {
-  const API_BASE = "https://localhost:7241";
+  const API_BASE = "https://bmscatering-api.azurewebsites.net";
   const RESERVATION_API = `${API_BASE}/Reservation`;
   const MENU_API = `${API_BASE}/Menu`;
   const DECORATION_API = `${API_BASE}/Decoration`;
